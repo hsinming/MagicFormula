@@ -5,7 +5,7 @@ Stock data is retrieved using the yahooquery. https://yahooquery.dpguthrie.com
 
 ## Getting started
 
-# Install Anaconda [tutorial](https://docs.anaconda.com/anaconda/install/index.html)
+### Install Anaconda [tutorial](https://docs.anaconda.com/anaconda/install/index.html)
 
 ```
 git clone https://github.com/hsinming/MagicFormula.git
@@ -28,4 +28,4 @@ There are three flags to be aware of:
 * `--profile`    forcefully renew summary profile
 * `--financial`    forcefully renew financial statements
 
-## Inspired by nblade66 [site](https://github.com/nblade66/MagicFormula)
+### Inspired by nblade66 [github repository](https://github.com/nblade66/MagicFormula)
