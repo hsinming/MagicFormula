@@ -154,7 +154,8 @@ def rank_stocks(db_path, csv_path):
     ''')
 
     cols = [column[0] for column in query.description]
-    pd.DataFrame.from_records(data=query.fetchall(), columns=cols).to_csv(csv_path, index_label='ticker')
+    df = pd.DataFrame.from_records(data=query.fetchall(), columns=cols, index='ticker')
+    df.to_csv(csv_path, index_label='ticker')
 
     if conn:
         conn.close()
@@ -367,7 +368,7 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
                         print(f"\nBanned by yahoo finance API.")
                         event.set()
 
-                    if sum_success % 20 == 0:
+                    if (sum_success + 1) % 20 == 0:
                         print(f'\nRetrieved {sum_success} records. Saving file in {part_csv_path}')
                         dict_to_csv(dict(dict_proxy), part_csv_path)
 
