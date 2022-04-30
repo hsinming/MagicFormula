@@ -4,10 +4,10 @@ A python implementation of the Magic Formula Investing described in The Little B
 Stock data is retrieved using the yahooquery. https://yahooquery.dpguthrie.com
 
 Lists of stocks were found on:
-ftp://ftp.nasdaqtrader.com/symboldirectory/nasdaqlisted.txt
-ftp://ftp.nasdaqtrader.com/symboldirectory/otherlisted.txt
-https://mopsfin.twse.com.tw/opendata/t187ap03_L.csv
-https://mopsfin.twse.com.tw/opendata/t187ap03_O.csv
+[NASDAQ](ftp://ftp.nasdaqtrader.com/symboldirectory/nasdaqlisted.txt)
+[NYSE](ftp://ftp.nasdaqtrader.com/symboldirectory/otherlisted.txt)
+[TWSE](https://mopsfin.twse.com.tw/opendata/t187ap03_L.csv)
+[TWSE OTC](https://mopsfin.twse.com.tw/opendata/t187ap03_O.csv)
 
 ## Getting started
 
