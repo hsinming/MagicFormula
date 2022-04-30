@@ -171,36 +171,6 @@ def chunker(seq: list, size: int) -> Generator:
     return (seq[pos: pos+size] for pos in range(0, len(seq), size))
 
 
-def retrieve_data(batch_sz: int, metric: str, tickers: list, part_save_path: Path, input_dict: dict) -> dict:
-    with mp.Manager() as manager:
-        dict_proxy = manager.dict(input_dict)
-        event = Event()
-        n_banned = 10
-
-        with concurrent.futures.ThreadPoolExecutor(args.n_thread) as executor:
-            chunks = list(chunker(tickers, batch_sz))
-            tasks = {executor.submit(_retrieve, i, chunk, metric, dict_proxy, event): i for i, chunk in enumerate(chunks)}
-            last_n_queue = deque([], n_banned)
-
-            for future in concurrent.futures.as_completed(tasks.keys()):
-                success = future.result()
-                last_n_queue.append(success)
-                is_banned = len(last_n_queue) == n_banned and all(x == 0 for x in last_n_queue)
-
-                if is_banned:
-                    print(f"\nBanned by yahoo finance API.")
-                    event.set()
-
-                i = tasks[future]
-                if (i + 1) % 20 == 0:
-                    print(f'\nRetrieved {len(dict_proxy)} records. Saving file in {part_save_path}')
-                    dict_to_csv(dict(dict_proxy), part_save_path)
-
-            part_save_path.unlink(missing_ok=True)
-
-        return dict(dict_proxy)
-
-
 def _retrieve(chunk_id: int, tickers: list, metric: str, dict_proxy: dict, event: Event) -> int:
     print(f"Chunk {chunk_id + 1}: Tickers to be retrieved are: {tickers}")
 
@@ -242,7 +212,7 @@ def _retrieve(chunk_id: int, tickers: list, metric: str, dict_proxy: dict, event
 
     thread_end = time.time()
 
-    print(f"Time elapsed for chunk {chunk_id + 1}: {thread_end - thread_start:.1f} seconds. Success: {success} Metric: {metric}")
+    print(f"Time elapsed for chunk {chunk_id + 1}: {thread_end - thread_start:.1f} seconds. Metric: {metric} Succeeded: {success}")
     print()
 
     return success
@@ -260,10 +230,10 @@ def download_csv_to_df(url: str) -> pd.DataFrame:
     return df
 
 
-def download_ticker_list(country: str) -> list:
+def download_ticker_list(country_code: str) -> list:
     ticker_list = []
 
-    if country.upper() == 'US':
+    if country_code.upper() == 'US':
         """ US stock data from:
         https://www.nasdaqtrader.com/trader.aspx?id=symboldirdefs
         ftp://ftp.nasdaqtrader.com/symboldirectory/nasdaqlisted.txt
@@ -282,9 +252,12 @@ def download_ticker_list(country: str) -> list:
 
         else:
             ftp_server.cwd('symboldirectory')
+
             for file in [nasdaq_list, non_nasdaq_list]:
+
                 with open(file, 'wb') as fp:
                     ftp_server.retrbinary(f"RETR {file}", fp.write)
+
             ftp_server.quit()
 
         if Path(nasdaq_list).is_file() and Path(non_nasdaq_list).is_file():
@@ -296,7 +269,7 @@ def download_ticker_list(country: str) -> list:
             non_nasdaq_ticker_list = non_nasdaq_df['ACT Symbol'].to_list()
             ticker_list = nasdaq_ticker_list + non_nasdaq_ticker_list
 
-    if country.upper() == 'TW':
+    if country_code.upper() == 'TW':
         """ TWSE data from: 
         https://data.gov.tw/datasets/search?p=1&size=10
         上市公司基本資料
@@ -305,11 +278,12 @@ def download_ticker_list(country: str) -> list:
         stock_csv = 'https://mopsfin.twse.com.tw/opendata/t187ap03_L.csv'
         otc_csv = 'https://mopsfin.twse.com.tw/opendata/t187ap03_O.csv'
         csv_paths = [stock_csv, otc_csv]
+        suffixes = ['.TW', '.TWO']
 
-        for path in csv_paths:
+        for path, suffix in zip(csv_paths, suffixes):
             df = download_csv_to_df(path)
             series = df['公司代號']
-            ticker_list.extend(series.to_list())
+            ticker_list += [f'{ticker}{suffix}' for ticker in series.to_list()]
 
     return ticker_list
 
@@ -338,7 +312,7 @@ def remove_sector(input_dict: dict) -> dict:
     return {k: v for k, v in input_dict.items() if v['sector'] not in exclude_sectors}
 
 
-def get_financial(ticker_list: list, metric: str, keys: list, is_forced=False) -> dict:
+def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -> dict:
     result = {}
 
     # Read all saved csv files, including partially saved csv file
@@ -369,10 +343,58 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced=False) -
 
     if len(tickers_need_update) > 0:
         print(f"Retrieving financial data...")
-        data = retrieve_data(args.batch_size, metric, tickers_need_update, save_root / f"{fn_financial}_part.csv", result)
-        result.update(data)
+
+        with mp.Manager() as manager:
+            dict_proxy = manager.dict(result)
+            event = Event()    # Once it occurs, all futures stop.
+
+            with concurrent.futures.ThreadPoolExecutor(args.n_thread) as executor:
+                chunks = list(chunker(tickers_need_update, args.batch_size))
+                tasks = {executor.submit(_retrieve, i, chunk, metric, dict_proxy, event): i for i, chunk in
+                         enumerate(chunks)}
+                n_banned = 10
+                last_n_queue = deque([], n_banned)
+                sum_success = 0
+                part_csv_path = save_root / f"{fn_financial}_part.csv"
+
+                for future in concurrent.futures.as_completed(tasks.keys()):
+                    success = future.result()
+                    sum_success += success
+                    last_n_queue.append(success)
+                    is_banned = len(last_n_queue) == n_banned and all(x == 0 for x in last_n_queue)
+
+                    if is_banned:
+                        print(f"\nBanned by yahoo finance API.")
+                        event.set()
+
+                    if sum_success % 20 == 0:
+                        print(f'\nRetrieved {sum_success} records. Saving file in {part_csv_path}')
+                        dict_to_csv(dict(dict_proxy), part_csv_path)
+
+                part_csv_path.unlink(missing_ok=True)
+
+            result.update(dict(dict_proxy))
     
     return result
+
+
+def get_ticker_list(country_code: str) -> list:
+    ticker_list_path = save_root / f'{fn_ticker_list}.json'
+
+    if ticker_list_path.is_file():
+        print("Loading ticker list...")
+        with ticker_list_path.open('rt') as fp:
+            ticker_list = json.load(fp)
+
+    else:
+        print("Get ticker list...")
+        ticker_list = download_ticker_list(country_code)
+
+        with ticker_list_path.open('wt') as fp:
+            json.dump(ticker_list, fp, indent=4)
+            print(f'{ticker_list_path} is saved.')
+
+    return ticker_list
 
 
 def dict_to_csv(data: dict, csv_path: Path):
@@ -405,20 +427,8 @@ def process_args():
 def main():
     global financial_dict
 
-    # Retrieves or load ticker list
-    ticker_list_path = save_root / f'{fn_ticker_list}.json'
-
-    if not ticker_list_path.is_file():
-        print("Get ticker list...")
-        ticker_list = download_ticker_list(args.country)
-        with ticker_list_path.open('wt') as fp:
-            json.dump(ticker_list, fp, indent=4)
-            print(f'{ticker_list_path} is saved.')
-
-    else:
-        print("Loading ticker list...")
-        with ticker_list_path.open('rt') as fp:
-            ticker_list = json.load(fp)
+    # Retrieve or load ticker list
+    ticker_list = get_ticker_list(args.country)
 
     # Load old financial data then update it
     for metric, keys, is_forced in zip(metric_list, keys_list, force_renew_list):
