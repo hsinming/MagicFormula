@@ -448,7 +448,7 @@ if __name__ == '__main__':
     profile_keys = ["sector"]
     all_keys = profile_keys + price_keys + financial_keys + key_stats_keys
 
-    metric_list = ["financials", "profile", "price", "key_stats"]
+    metric_list = ["financial", "profile", "price", "key_stats"]
     keys_list = [financial_keys, profile_keys, price_keys, key_stats_keys]
     force_renew_list = [args.force_financial, args.force_profile, args.force_price, args.force_key_stats]
 
