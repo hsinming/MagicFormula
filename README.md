@@ -1,5 +1,5 @@
 # MagicFormula
-A python implementation of the Magic Formula Investing described in The Little Book That Still Beats the Market by investor Joel Greenblatt.
+A python implementation of the Magic Formula Investing described in [The Little Book That Still Beats the Market](https://www.amazon.com/Little-Still-Market-Books-Profits-ebook/dp/B003VWCQB0) by investor Joel Greenblatt.
 
 Stock data is retrieved using the yahooquery. https://yahooquery.dpguthrie.com
 
@@ -12,7 +12,7 @@ git clone https://github.com/hsinming/MagicFormula.git
 cd MagicFormula
 conda env create -f environment.yml
 conda activate stock
-python magic_formula.py
+python main.py
 ```
 
 ## Configuration

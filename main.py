@@ -204,7 +204,7 @@ def retrieve_data(batch_sz: int, metric: str, tickers: list, part_save_path: Pat
 def _retrieve(chunk_id: int, tickers: list, metric: str, dict_proxy: dict, event: Event) -> int:
     print(f"Chunk {chunk_id + 1}: Tickers to be retrieved are: {tickers}")
 
-    start = time.time()
+    thread_start = time.time()
     success = 0
 
     for t in tickers:
@@ -240,9 +240,9 @@ def _retrieve(chunk_id: int, tickers: list, metric: str, dict_proxy: dict, event
         else:
             break
 
-    end = time.time()
+    thread_end = time.time()
 
-    print(f"Time elapsed for chunk {chunk_id + 1}: {end - start:.1f} seconds. Success: {success} Metric: {metric}")
+    print(f"Time elapsed for chunk {chunk_id + 1}: {thread_end - thread_start:.1f} seconds. Success: {success} Metric: {metric}")
     print()
 
     return success
@@ -399,8 +399,7 @@ def process_args():
                         help='Renew summary profile')
     parser.add_argument('--min-market-cap', '-m', type=int, default=1e9, dest='min_market_cap',
                         help='Minimal market cap')
-    args = parser.parse_args()
-    return args
+    return parser.parse_args()
 
 
 def main():
@@ -437,6 +436,8 @@ if __name__ == '__main__':
     args = process_args()
     save_root = Path(args.country.upper())
     save_root.mkdir(0o755, exist_ok=True)
+
+    financial_dict = {}
 
     fn_ticker_list = 'ticker_list'
     fn_financial = 'financial'
