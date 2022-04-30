@@ -5,12 +5,13 @@ Stock data is retrieved using the yahooquery. https://yahooquery.dpguthrie.com
 
 ## Getting started
 
-Here is how to download the source code, install all dependencies, and run the program:
+# Install Anaconda [tutorial](https://docs.anaconda.com/anaconda/install/index.html)
 
 ```
 git clone https://github.com/hsinming/MagicFormula.git
 cd MagicFormula
-pip install -r requirements.txt
+conda env create -f environment.yml
+conda activate stock
 python magic_formula.py
 ```
 
