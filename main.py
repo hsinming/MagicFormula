@@ -1,6 +1,13 @@
 #!/usr/bin/python3
-#-*- coding:utf-8 -*-
-
+# -*- coding:utf-8 -*-
+"""
+@author: Hsin-ming Chen
+@license: GNU V3
+@file: main.py
+@time: 2022/05/01
+@contact: hsinming.chen@gmail.com
+@software: PyCharm
+"""
 import json
 import argparse
 import math
@@ -19,7 +26,7 @@ from yahooquery import Ticker
 from fiscalyear import FiscalDateTime
 
 
-class Formula(object):
+class FinancialStatement(object):
     def __init__(self, financial_dict: dict):
         self.ticker = ''
         self.financial_dict = financial_dict
@@ -122,6 +129,24 @@ class Formula(object):
             return 0
 
     @property
+    def roc(self):
+        return self.ebit / (self.net_working_capital + self.net_fixed_assets)
+
+    @property
+    def earnings_yield(self):
+        """ https://www.valuesignals.com/Glossary/Details/Earnings_Yield/13381
+        """
+        return self.ebit / self.enterprise_value
+
+    @property
+    def book_market_ratio(self):
+        try:
+            return 1 / self.financial_dict[self.ticker]["priceToBook"]
+        except Exception as e:
+            print(f"Missing information for {self.ticker}\n{e}")
+            return 0
+
+    @property
     def sector(self):
         try:
             return self.financial_dict[self.ticker]["sector"]
@@ -136,16 +161,6 @@ class Formula(object):
         except Exception as e:
             print(f"Missing information for {self.ticker}\n{e}")
             return 'not available'
-
-    @property
-    def roc(self):
-        return self.ebit / (self.net_working_capital + self.net_fixed_assets)
-
-    @property
-    def earnings_yield(self):
-        """ https://www.valuesignals.com/Glossary/Details/Earnings_Yield/13381
-        """
-        return self.ebit / self.enterprise_value
 
 
 def insert_data(conn, ticker_info):
@@ -170,13 +185,13 @@ def update_db(tickers, db_path):
     most_recent DATE
     );''')
 
-    formula = Formula(financial_dict)
+    fs = FinancialStatement(financial_dict)
 
     for ticker in tickers:
 
         try:
-            formula.set_ticker(ticker)
-            data = (ticker, formula.sector, formula.market_cap, formula.roc, formula.earnings_yield, formula.financial_date)
+            fs.set_ticker(ticker)
+            data = (ticker, fs.sector, fs.market_cap, fs.roc, fs.earnings_yield, fs.financial_date)
             insert_data(conn, data)
 
         except Exception as e:
@@ -284,8 +299,8 @@ def _retrieve(chunk_id: int, tickers: list, metric: str, dict_proxy: dict, event
 def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -> dict:
     result = {}
 
-    # Read all saved csv files, including partially saved csv file
-    for file in save_root.glob(f"{fn_financial}*.csv"):
+    # Read all saved csv files, renew part.csv first.
+    for file in save_root.glob(f"{fn_financial}*.csv"):    # TODO renew part.csv explicitly
         print(f"Loading financial data from {file}...")
         df = pd.read_csv(file, index_col='ticker')
         df = df.sort_index()
@@ -319,16 +334,16 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
 
             with concurrent.futures.ThreadPoolExecutor(args.n_thread) as executor:
                 chunks = list(chunker(tickers_need_update, args.batch_size))
-                tasks = {executor.submit(_retrieve, i, chunk, metric, dict_proxy, event): i for i, chunk in
-                         enumerate(chunks)}
+                tasks = {executor.submit(_retrieve, i, chunk, metric, dict_proxy, event): i
+                         for i, chunk in enumerate(chunks)}
                 n_banned = 10
                 last_n_queue = deque([], n_banned)
-                sum_success = 0
+                success_counter = 0
                 part_csv_path = save_root / f"{fn_financial}_part.csv"
 
                 for future in concurrent.futures.as_completed(tasks.keys()):
                     success = future.result()
-                    sum_success += success
+                    success_counter += success
                     last_n_queue.append(success)
                     is_banned = len(last_n_queue) == n_banned and all(x == 0 for x in last_n_queue)
 
@@ -336,13 +351,13 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
                         print(f"\nBanned by yahoo finance API.")
                         event.set()
 
-                    elif (sum_success + 1) % 20 == 0:
-                        print(f'\nRetrieved {sum_success} records. Saving file in {part_csv_path}')
+                    elif (success_counter - 1) % 20 == 0:
+                        print(f'\nRetrieved {success_counter} records. Saving file in {part_csv_path}')
                         dict_to_csv(dict(dict_proxy), part_csv_path)
 
                 part_csv_path.unlink(missing_ok=True)
-
             result.update(dict(dict_proxy))
+        dict_to_csv(result, save_root / f"{fn_financial}.csv")
     
     return result
 
@@ -478,7 +493,6 @@ def main():
     # Load old financial data then update it
     for metric, keys, is_forced in zip(metric_list, keys_list, force_renew_list):
         financial_dict = get_financial(ticker_list, metric, keys, is_forced)
-        dict_to_csv(financial_dict, save_root / f"{fn_financial}.csv")
 
     financial_dict = remove_outdated(financial_dict)
     financial_dict = remove_small_marketcap(financial_dict)
