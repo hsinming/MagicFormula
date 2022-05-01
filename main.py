@@ -44,6 +44,8 @@ def get_totalCurrentLiabilities(ticker):
 
 
 def get_net_working_capital(ticker):
+    """ https://www.valuesignals.com/Glossary/Details/Net_Working_Capital?securityId=13381
+    """
     return get_totalCurrentAssets(ticker) - get_totalCurrentLiabilities(ticker)
 
 
@@ -60,6 +62,8 @@ def get_net_fixed_assets(ticker):
 
 
 def get_market_cap(ticker):
+    """ https://www.valuesignals.com/Glossary/Details/Market_Capitalization/13381
+    """
     try:
         return financial_dict[ticker]["marketCap"]
     except Exception as e:
@@ -68,16 +72,7 @@ def get_market_cap(ticker):
 
 
 def get_enterprise_value(ticker):
-    """
-    https://en.wikipedia.org/wiki/Enterprise_value
-    Enterprise value =
-    common equity at market value (this line item is also known as "market cap")
-    + debt at market value (here debt refers to interest-bearing liabilities, both long-term and short-term)
-    + minority interest at market value, if any
-    + preferred equity at market value
-    + unfunded pension liabilities and other debt-deemed provisions
-    – value of associate companies
-    – cash and cash equivalents.
+    """ https://www.valuesignals.com/Glossary/Details/Enterprise_Value
     """
     try:
         return financial_dict[ticker]["enterpriseValue"]
@@ -103,6 +98,8 @@ def get_roc(ticker):
 
 
 def get_earning_yield(ticker):
+    """ https://www.valuesignals.com/Glossary/Details/Earnings_Yield/13381
+    """
     return get_ebit(ticker) / get_enterprise_value(ticker)
 
 
@@ -288,7 +285,7 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
                         print(f"\nBanned by yahoo finance API.")
                         event.set()
 
-                    if (sum_success + 1) % 20 == 0:
+                    elif (sum_success + 1) % 20 == 0:
                         print(f'\nRetrieved {sum_success} records. Saving file in {part_csv_path}')
                         dict_to_csv(dict(dict_proxy), part_csv_path)
 
