@@ -27,9 +27,9 @@ from fiscalyear import FiscalDateTime
 
 
 class FinancialStatement(object):
-    def __init__(self, financial_dict: dict):
+    def __init__(self, sheet: dict):
         self.ticker = ''
-        self.financial_dict = financial_dict
+        self.sheet = sheet
 
     def set_ticker(self, ticker: str):
         self.ticker = ticker
@@ -37,7 +37,7 @@ class FinancialStatement(object):
     @property
     def ebit(self):
         try:
-            return self.financial_dict[self.ticker]["EBIT"]
+            return self.sheet[self.ticker]["EBIT"]
         except Exception as e:
             print(f"Missing information for {self.ticker}\n{e}")
             return 0
@@ -45,7 +45,7 @@ class FinancialStatement(object):
     @property
     def current_assets(self):
         try:
-            return self.financial_dict[self.ticker]["CurrentAssets"]
+            return self.sheet[self.ticker]["CurrentAssets"]
         except Exception as e:
             print(f"Missing information for {self.ticker}\n{e}")
             return 0
@@ -53,7 +53,7 @@ class FinancialStatement(object):
     @property
     def current_liabilities(self):
         try:
-            return self.financial_dict[self.ticker]["CurrentLiabilities"]
+            return self.sheet[self.ticker]["CurrentLiabilities"]
         except Exception as e:
             print(f"Missing information for {self.ticker}\n{e}")
             return 0
@@ -61,7 +61,7 @@ class FinancialStatement(object):
     @property
     def total_debt(self):
         try:
-            return self.financial_dict[self.ticker]["TotalDebt"]
+            return self.sheet[self.ticker]["TotalDebt"]
         except Exception as e:
             print(f"Missing information for {self.ticker}\n{e}")
             return 0
@@ -69,7 +69,7 @@ class FinancialStatement(object):
     @property
     def longterm_debt(self):
         try:
-            return self.financial_dict[self.ticker]["LongTermDebt"]
+            return self.sheet[self.ticker]["LongTermDebt"]
         except Exception as e:
             print(f"Missing information for {self.ticker}\n{e}")
             return 0
@@ -77,7 +77,7 @@ class FinancialStatement(object):
     @property
     def total_cash(self):
         try:
-            return self.financial_dict[self.ticker]["CashCashEquivalentsAndShortTermInvestments"]
+            return self.sheet[self.ticker]["CashCashEquivalentsAndShortTermInvestments"]
         except Exception as e:
             print(f"Missing information for {self.ticker}\n{e}")
             return 0
@@ -99,7 +99,7 @@ class FinancialStatement(object):
     @property
     def net_PPE(self):
         try:
-            return self.financial_dict[self.ticker]["NetPPE"]
+            return self.sheet[self.ticker]["NetPPE"]
         except Exception as e:
             print(f"Missing information for {self.ticker}\n{e}")
             return 0
@@ -113,7 +113,7 @@ class FinancialStatement(object):
         """ https://www.valuesignals.com/Glossary/Details/Market_Capitalization/13381
         """
         try:
-            return self.financial_dict[self.ticker]["marketCap"]
+            return self.sheet[self.ticker]["marketCap"]
         except Exception as e:
             print(f"Missing information for {self.ticker}\n{e}")
             return 0
@@ -123,7 +123,7 @@ class FinancialStatement(object):
         """ https://www.valuesignals.com/Glossary/Details/Enterprise_Value
         """
         try:
-            return self.financial_dict[self.ticker]["enterpriseValue"]
+            return self.sheet[self.ticker]["enterpriseValue"]
         except Exception as e:
             print(f"Missing information for {self.ticker}\n{e}")
             return 0
@@ -141,7 +141,7 @@ class FinancialStatement(object):
     @property
     def book_market_ratio(self):
         try:
-            return 1 / self.financial_dict[self.ticker]["priceToBook"]
+            return 1 / self.sheet[self.ticker]["priceToBook"]
         except Exception as e:
             print(f"Missing information for {self.ticker}\n{e}")
             return 0
@@ -149,7 +149,7 @@ class FinancialStatement(object):
     @property
     def sector(self):
         try:
-            return self.financial_dict[self.ticker]["sector"]
+            return self.sheet[self.ticker]["sector"]
         except Exception as e:
             print(f"Missing information for {self.ticker}\n{e}")
             return 'not available'
@@ -157,7 +157,7 @@ class FinancialStatement(object):
     @property
     def financial_date(self):
         try:
-            return self.financial_dict[self.ticker]["asOfDate"]
+            return self.sheet[self.ticker]["asOfDate"]
         except Exception as e:
             print(f"Missing information for {self.ticker}\n{e}")
             return 'not available'
