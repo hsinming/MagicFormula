@@ -19,92 +19,137 @@ from yahooquery import Ticker
 from fiscalyear import FiscalDateTime
 
 
-def get_ebit(ticker):
-    try:
-        return financial_dict[ticker]["EBIT"]
-    except Exception as e:
-        print(f"Missing {e} information for {ticker}")
-        return 0
+class Formula(object):
+    def __init__(self, financial_dict: dict):
+        self.ticker = ''
+        self.financial_dict = financial_dict
 
+    def set_ticker(self, ticker: str):
+        self.ticker = ticker
 
-def get_totalCurrentAssets(ticker):
-    try:
-        return financial_dict[ticker]["CurrentAssets"]
-    except Exception as e:
-        print(f"Missing {e} information for {ticker}")
-        return 0
+    @property
+    def ebit(self):
+        try:
+            return self.financial_dict[self.ticker]["EBIT"]
+        except Exception as e:
+            print(f"Missing information for {self.ticker}\n{e}")
+            return 0
 
+    @property
+    def current_assets(self):
+        try:
+            return self.financial_dict[self.ticker]["CurrentAssets"]
+        except Exception as e:
+            print(f"Missing information for {self.ticker}\n{e}")
+            return 0
 
-def get_totalCurrentLiabilities(ticker):
-    try:
-        return financial_dict[ticker]["CurrentLiabilities"]
-    except Exception as e:
-        print(f"Missing {e} information for {ticker}")
-        return 0
+    @property
+    def current_liabilities(self):
+        try:
+            return self.financial_dict[self.ticker]["CurrentLiabilities"]
+        except Exception as e:
+            print(f"Missing information for {self.ticker}\n{e}")
+            return 0
 
+    @property
+    def total_debt(self):
+        try:
+            return self.financial_dict[self.ticker]["TotalDebt"]
+        except Exception as e:
+            print(f"Missing information for {self.ticker}\n{e}")
+            return 0
 
-def get_net_working_capital(ticker):
-    """ https://www.valuesignals.com/Glossary/Details/Net_Working_Capital?securityId=13381
-    """
-    return get_totalCurrentAssets(ticker) - get_totalCurrentLiabilities(ticker)
+    @property
+    def longterm_debt(self):
+        try:
+            return self.financial_dict[self.ticker]["LongTermDebt"]
+        except Exception as e:
+            print(f"Missing information for {self.ticker}\n{e}")
+            return 0
 
+    @property
+    def total_cash(self):
+        try:
+            return self.financial_dict[self.ticker]["CashCashEquivalentsAndShortTermInvestments"]
+        except Exception as e:
+            print(f"Missing information for {self.ticker}\n{e}")
+            return 0
 
-def get_netPropertyPlantEquipment(ticker):
-    try:
-        return financial_dict[ticker]["NetPPE"]
-    except Exception as e:
-        print(f"Missing {e} information for {ticker}")
-        return 0
+    @property
+    def excess_cash(self):
+        try:
+            return self.total_cash - max(0, self.current_liabilities - self.current_assets + self.total_cash)
+        except Exception as e:
+            print(f"Missing information for {self.ticker}\n{e}")
+            return 0
 
+    @property
+    def net_working_capital(self):
+        """ https://www.valuesignals.com/Glossary/Details/Net_Working_Capital?securityId=13381
+        """
+        return max(0, (self.current_assets - self.excess_cash - (self.current_liabilities - (self.total_debt - self.longterm_debt))))
 
-def get_net_fixed_assets(ticker):
-    return get_netPropertyPlantEquipment(ticker)
+    @property
+    def net_PPE(self):
+        try:
+            return self.financial_dict[self.ticker]["NetPPE"]
+        except Exception as e:
+            print(f"Missing information for {self.ticker}\n{e}")
+            return 0
 
+    @property
+    def net_fixed_assets(self):
+        return self.net_PPE
 
-def get_market_cap(ticker):
-    """ https://www.valuesignals.com/Glossary/Details/Market_Capitalization/13381
-    """
-    try:
-        return financial_dict[ticker]["marketCap"]
-    except Exception as e:
-        print(f"Missing {e} information for {ticker}")
-        return 0
+    @property
+    def market_cap(self):
+        """ https://www.valuesignals.com/Glossary/Details/Market_Capitalization/13381
+        """
+        try:
+            return self.financial_dict[self.ticker]["marketCap"]
+        except Exception as e:
+            print(f"Missing information for {self.ticker}\n{e}")
+            return 0
 
+    @property
+    def enterprise_value(self):
+        """ https://www.valuesignals.com/Glossary/Details/Enterprise_Value
+        """
+        try:
+            return self.financial_dict[self.ticker]["enterpriseValue"]
+        except Exception as e:
+            print(f"Missing information for {self.ticker}\n{e}")
+            return 0
 
-def get_enterprise_value(ticker):
-    """ https://www.valuesignals.com/Glossary/Details/Enterprise_Value
-    """
-    try:
-        return financial_dict[ticker]["enterpriseValue"]
-    except Exception as e:
-        print(f"Missing {e} information for {ticker}")
-        return -1
+    @property
+    def sector(self):
+        try:
+            return self.financial_dict[self.ticker]["sector"]
+        except Exception as e:
+            print(f"Missing information for {self.ticker}\n{e}")
+            return 'not available'
 
+    @property
+    def financial_date(self):
+        try:
+            return self.financial_dict[self.ticker]["asOfDate"]
+        except Exception as e:
+            print(f"Missing information for {self.ticker}\n{e}")
+            return 'not available'
 
-def get_sector(ticker):
-    try:
-        return financial_dict[ticker]["sector"]
-    except Exception as e:
-        print(f"Missing {e} information for {ticker}")
-        return 'not available'
+    @property
+    def roc(self):
+        return self.ebit / (self.net_working_capital + self.net_fixed_assets)
 
-
-def get_financial_date(ticker):
-    return financial_dict[ticker]['asOfDate']
-
-
-def get_roc(ticker):
-    return get_ebit(ticker) / (get_net_working_capital(ticker) + get_net_fixed_assets(ticker))
-
-
-def get_earning_yield(ticker):
-    """ https://www.valuesignals.com/Glossary/Details/Earnings_Yield/13381
-    """
-    return get_ebit(ticker) / get_enterprise_value(ticker)
+    @property
+    def earnings_yield(self):
+        """ https://www.valuesignals.com/Glossary/Details/Earnings_Yield/13381
+        """
+        return self.ebit / self.enterprise_value
 
 
 def insert_data(conn, ticker_info):
-    sql = ''' REPLACE INTO stock_table (ticker, sector, market_cap, roc, earning_yield, most_recent)
+    sql = ''' REPLACE INTO stock_table (ticker, sector, market_cap, roc, earnings_yield, most_recent)
               VALUES(?,?,?,?,?,?) '''
     cur = conn.cursor()
     cur.execute(sql, ticker_info)
@@ -121,16 +166,22 @@ def update_db(tickers, db_path):
     sector text,
     market_cap real,
     roc real NOT NULL,
-    earning_yield real NOT NULL,
+    earnings_yield real NOT NULL,
     most_recent DATE
     );''')
+
+    formula = Formula(financial_dict)
+
     for ticker in tickers:
+
         try:
-            data = (ticker, get_sector(ticker), get_market_cap(ticker),
-                    get_roc(ticker), get_earning_yield(ticker), get_financial_date(ticker))
+            formula.set_ticker(ticker)
+            data = (ticker, formula.sector, formula.market_cap, formula.roc, formula.earnings_yield, formula.financial_date)
             insert_data(conn, data)
+
         except Exception as e:
             print(f"Insert data error for ticker {ticker}: {e}. Going to next ticker.")
+
     if conn:
         conn.close()
 
@@ -141,10 +192,10 @@ def rank_stocks(db_path, csv_path):
     cursor = conn.cursor()
     query = cursor.execute(f'''
     SELECT * FROM (
-        SELECT *, roc_rank + earning_yield_rank AS magic_rank FROM
+        SELECT *, roc_rank + earnings_yield_rank AS magic_rank FROM
         (
             SELECT *,  RANK ()  OVER( ORDER BY roc DESC) AS roc_rank,
-            RANK () OVER( ORDER BY earning_yield DESC) AS earning_yield_rank FROM stock_table      
+            RANK () OVER( ORDER BY earnings_yield DESC) AS earnings_yield_rank FROM stock_table      
         ) 
     )
     ORDER BY magic_rank ASC
@@ -447,8 +498,9 @@ if __name__ == '__main__':
     fn_financial = 'financial'
     fn_stock_rank = 'stock_rank'
 
-    financial_keys = ["asOfDate", "currencyCode", "CurrentAssets", "CurrentLiabilities", "NetPPE", "EBIT"]
-    key_stats_keys = ["enterpriseValue"]
+    financial_keys = ["asOfDate", "currencyCode", "TotalDebt", "LongTermDebt", "CurrentAssets", "CurrentLiabilities",
+                      "NetPPE", "EBIT", "CashCashEquivalentsAndShortTermInvestments"]
+    key_stats_keys = ["enterpriseValue", "priceToBook"]
     price_keys = ["marketCap"]
     profile_keys = ["sector"]
     all_keys = profile_keys + price_keys + financial_keys + key_stats_keys
