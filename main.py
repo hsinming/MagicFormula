@@ -168,19 +168,36 @@ def print_db(db_path):
         conn.close()
 
 
+def dict_to_csv(data: dict, csv_path: Path):
+    df = pd.DataFrame.from_dict(data, orient='index')
+    df = df.sort_index()
+    df.to_csv(csv_path, index_label='ticker')
+
+
+def download_csv_to_df(url: str) -> pd.DataFrame:
+    tmp_csv = Path('tmp.csv')
+
+    with tmp_csv.open('wb') as fp:
+        content = requests.get(url).content
+        fp.write(content)
+
+    df = pd.read_csv(tmp_csv)
+    tmp_csv.unlink()
+    return df
+
+
 def chunker(seq: list, size: int) -> Generator:
     return (seq[pos: pos+size] for pos in range(0, len(seq), size))
 
 
 def _retrieve(chunk_id: int, tickers: list, metric: str, dict_proxy: dict, event: Event) -> int:
-    print(f"Chunk {chunk_id + 1}: Tickers to be retrieved are: {tickers}")
-
-    thread_start = time.time()
     success = 0
 
-    for t in tickers:
+    if not event.is_set():
+        print(f"Chunk {chunk_id + 1}: Tickers to be retrieved are: {tickers}")
+        thread_start = time.time()
 
-        if not event.is_set():
+        for t in tickers:
             stock = Ticker(t)
             row_dict = dict_proxy.get(t, {k: '' for k in all_keys})
             data = {t: ''}
@@ -208,109 +225,12 @@ def _retrieve(chunk_id: int, tickers: list, metric: str, dict_proxy: dict, event
                 dict_proxy[t] = row_dict
                 success += 1
 
-        else:
-            break
+        thread_end = time.time()
 
-    thread_end = time.time()
-
-    print(f"Time elapsed for chunk {chunk_id + 1}: {thread_end - thread_start:.1f} seconds. Metric: {metric} Succeeded: {success}")
-    print()
+        print(f"Time elapsed for chunk {chunk_id + 1}: {thread_end - thread_start:.1f} seconds. Metric: {metric} Succeeded: {success}")
+        print()
 
     return success
-
-
-def download_csv_to_df(url: str) -> pd.DataFrame:
-    tmp_csv = Path('tmp.csv')
-
-    with tmp_csv.open('wb') as fp:
-        content = requests.get(url).content
-        fp.write(content)
-
-    df = pd.read_csv(tmp_csv)
-    tmp_csv.unlink()
-    return df
-
-
-def download_ticker_list(country_code: str) -> list:
-    ticker_list = []
-
-    if country_code.upper() == 'US':
-        """ US stock data from:
-        https://www.nasdaqtrader.com/trader.aspx?id=symboldirdefs
-        ftp://ftp.nasdaqtrader.com/symboldirectory/nasdaqlisted.txt
-        ftp://ftp.nasdaqtrader.com/symboldirectory/otherlisted.txt
-        """
-        nasdaq_list = 'nasdaqlisted.txt'
-        non_nasdaq_list = 'otherlisted.txt'
-
-        try:
-            ftp_server = FTP('ftp.nasdaqtrader.com', user='anonymous', passwd='', timeout=5)
-            ftp_server.encoding = 'utf-8'
-            ftp_server.dir()
-
-        except Exception as e:
-            print(f'Fail to connect ftp. {e}')
-
-        else:
-            ftp_server.cwd('symboldirectory')
-
-            for file in [nasdaq_list, non_nasdaq_list]:
-
-                with open(file, 'wb') as fp:
-                    ftp_server.retrbinary(f"RETR {file}", fp.write)
-
-            ftp_server.quit()
-
-        if Path(nasdaq_list).is_file() and Path(non_nasdaq_list).is_file():
-            nasdaq_df = pd.read_csv(nasdaq_list, sep='|')
-            non_nasdaq_df = pd.read_csv(non_nasdaq_list, sep='|')
-            nasdaq_df = nasdaq_df[(nasdaq_df['ETF'] == 'N') & (nasdaq_df['Test Issue'] == 'N') & (nasdaq_df['Financial Status'] == 'N')]
-            non_nasdaq_df = non_nasdaq_df[(non_nasdaq_df['ETF'] == 'N') & (non_nasdaq_df['Test Issue'] == 'N')]
-            nasdaq_ticker_list = nasdaq_df['Symbol'].to_list()
-            non_nasdaq_ticker_list = non_nasdaq_df['ACT Symbol'].to_list()
-            ticker_list = nasdaq_ticker_list + non_nasdaq_ticker_list
-
-    if country_code.upper() == 'TW':
-        """ TWSE data from: 
-        https://data.gov.tw/datasets/search?p=1&size=10
-        上市公司基本資料
-        上櫃股票基本資料                
-        """
-        stock_csv = 'https://mopsfin.twse.com.tw/opendata/t187ap03_L.csv'
-        otc_csv = 'https://mopsfin.twse.com.tw/opendata/t187ap03_O.csv'
-        csv_paths = [stock_csv, otc_csv]
-        suffixes = ['.TW', '.TWO']
-
-        for path, suffix in zip(csv_paths, suffixes):
-            df = download_csv_to_df(path)
-            series = df['公司代號']
-            ticker_list += [f'{ticker}{suffix}' for ticker in series.to_list()]
-
-    return ticker_list
-
-
-def remove_outdated(input_dict: dict) -> dict:
-    target_date = FiscalDateTime.today().prev_fiscal_quarter.prev_fiscal_quarter.end.strftime('%Y-%m-%d')
-    print(f'\nThe end date of the last second fiscal quarter is {target_date}')
-    print(f'\nThe financial statement date earlier than {target_date} will be excluded.')
-
-    output_dict = {}
-
-    for ticker, row in input_dict.items():
-        if isinstance(row['asOfDate'], str) and row['asOfDate'] >= target_date:
-            output_dict[ticker] = row
-
-    return output_dict
-
-
-def remove_small_marketcap(input_dict: dict) -> dict:
-    print(f"\nThe company with market cap < {args.min_market_cap} will be excluded.")
-    return {k: v for k, v in input_dict.items() if v['marketCap'] >= args.min_market_cap}
-
-
-def remove_sector(input_dict: dict) -> dict:
-    print(f"\nThe company sector in {exclude_sectors} will be excluded.")
-    return {k: v for k, v in input_dict.items() if v['sector'] not in exclude_sectors}
 
 
 def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -> dict:
@@ -379,6 +299,64 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
     return result
 
 
+def download_ticker_list(country_code: str) -> list:
+    ticker_list = []
+
+    if country_code.upper() == 'US':
+        """ US stock data from:
+        https://www.nasdaqtrader.com/trader.aspx?id=symboldirdefs
+        ftp://ftp.nasdaqtrader.com/symboldirectory/nasdaqlisted.txt
+        ftp://ftp.nasdaqtrader.com/symboldirectory/otherlisted.txt
+        """
+        nasdaq_list = 'nasdaqlisted.txt'
+        non_nasdaq_list = 'otherlisted.txt'
+
+        try:
+            ftp_server = FTP('ftp.nasdaqtrader.com', user='anonymous', passwd='', timeout=5)
+            ftp_server.encoding = 'utf-8'
+            ftp_server.dir()
+
+        except Exception as e:
+            print(f'Fail to connect ftp. {e}')
+
+        else:
+            ftp_server.cwd('symboldirectory')
+
+            for file in [nasdaq_list, non_nasdaq_list]:
+
+                with open(file, 'wb') as fp:
+                    ftp_server.retrbinary(f"RETR {file}", fp.write)
+
+            ftp_server.quit()
+
+        if Path(nasdaq_list).is_file() and Path(non_nasdaq_list).is_file():
+            nasdaq_df = pd.read_csv(nasdaq_list, sep='|')
+            non_nasdaq_df = pd.read_csv(non_nasdaq_list, sep='|')
+            nasdaq_df = nasdaq_df[(nasdaq_df['ETF'] == 'N') & (nasdaq_df['Test Issue'] == 'N') & (nasdaq_df['Financial Status'] == 'N')]
+            non_nasdaq_df = non_nasdaq_df[(non_nasdaq_df['ETF'] == 'N') & (non_nasdaq_df['Test Issue'] == 'N')]
+            nasdaq_ticker_list = nasdaq_df['Symbol'].to_list()
+            non_nasdaq_ticker_list = non_nasdaq_df['ACT Symbol'].to_list()
+            ticker_list = nasdaq_ticker_list + non_nasdaq_ticker_list
+
+    if country_code.upper() == 'TW':
+        """ TWSE data from: 
+        https://data.gov.tw/datasets/search?p=1&size=10
+        上市公司基本資料
+        上櫃股票基本資料                
+        """
+        stock_csv = 'https://mopsfin.twse.com.tw/opendata/t187ap03_L.csv'
+        otc_csv = 'https://mopsfin.twse.com.tw/opendata/t187ap03_O.csv'
+        csv_urls = [stock_csv, otc_csv]
+        suffixes = ['.TW', '.TWO']
+
+        for url, suffix in zip(csv_urls, suffixes):
+            df = download_csv_to_df(url)
+            series = df['公司代號']
+            ticker_list += [f'{ticker}{suffix}' for ticker in series.to_list()]
+
+    return ticker_list
+
+
 def get_ticker_list(country_code: str) -> list:
     ticker_list_path = save_root / f'{fn_ticker_list}.json'
 
@@ -398,10 +376,28 @@ def get_ticker_list(country_code: str) -> list:
     return ticker_list
 
 
-def dict_to_csv(data: dict, csv_path: Path):
-    df = pd.DataFrame.from_dict(data, orient='index')
-    df = df.sort_index()
-    df.to_csv(csv_path, index_label='ticker')
+def remove_outdated(input_dict: dict) -> dict:
+    target_date = FiscalDateTime.today().prev_fiscal_quarter.prev_fiscal_quarter.end.strftime('%Y-%m-%d')
+    print(f'\nThe end date of the last second fiscal quarter is {target_date}')
+    print(f'\nThe financial statement date earlier than {target_date} will be excluded.')
+
+    output_dict = {}
+
+    for ticker, row in input_dict.items():
+        if isinstance(row['asOfDate'], str) and row['asOfDate'] >= target_date:
+            output_dict[ticker] = row
+
+    return output_dict
+
+
+def remove_small_marketcap(input_dict: dict) -> dict:
+    print(f"\nThe company with market cap < {args.min_market_cap} will be excluded.")
+    return {k: v for k, v in input_dict.items() if v['marketCap'] >= args.min_market_cap}
+
+
+def remove_sector(input_dict: dict) -> dict:
+    print(f"\nThe company sector in {exclude_sectors} will be excluded.")
+    return {k: v for k, v in input_dict.items() if v['sector'] not in exclude_sectors}
 
 
 def process_args():
