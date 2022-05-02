@@ -249,7 +249,7 @@ def print_db(db_path):
 def dict_to_csv(input_dict: dict, csv_path: Path):
     df = pd.DataFrame.from_dict(input_dict, orient='index')
     df = df.sort_index()
-    df.to_csv(csv_path, index_label='ticker')
+    df.to_csv(csv_path, index_label='ticker', encoding='utf-8')
 
 
 def renew_column(input_dict: dict) -> dict:
@@ -553,7 +553,7 @@ def process_args():
                         help='Renew financial statement')
     parser.add_argument('--profile', action='store_true', dest='force_profile',
                         help='Renew summary profile')
-    parser.add_argument('--min-market-cap', '-m', type=int, default=1e9, dest='min_market_cap',
+    parser.add_argument('--min-market-cap', '-m', type=int, default=1e8, dest='min_market_cap',
                         help='Minimal market cap')
     return parser.parse_args()
 
@@ -568,10 +568,10 @@ def main():
     for metric, keys, is_forced in zip(metric_list, keys_list, force_renew_list):
         financial_dict = get_financial(ticker_list, metric, keys, is_forced)
 
-    financial_dict = remove_outdated(financial_dict)
-    financial_dict = remove_small_marketcap(financial_dict)
-    financial_dict = remove_sector(financial_dict)
-    financial_dict = remove_country(financial_dict)
+    # Exclude inappropriate tickers
+    for filter in filter_list:
+        financial_dict = filter(financial_dict)
+
     update_db(financial_dict.keys(), save_root / f"{fn_stock_rank}.db")
     rank_stocks(save_root / f"{fn_stock_rank}.db", save_root / f"{fn_stock_rank}.csv")
 
@@ -597,8 +597,8 @@ if __name__ == '__main__':
     metric_list = ["financial", "profile", "price", "key_stats"]
     keys_list = [financial_keys, profile_keys, price_keys, key_stats_keys]
     force_renew_list = [args.force_financial, args.force_profile, args.force_price, args.force_key_stats]
-
     excluded_sectors = ["Financial Services", "Utilities"]
+    filter_list = [remove_outdated, remove_sector, remove_small_marketcap, remove_country]
 
     start = time.time()
     main()

@@ -46,18 +46,18 @@ ABUS,Healthcare,,Arbutus Biopharma Corporation,346536224.0,USD,2021-12-31,261400
 ABVC,Healthcare,,"ABVC BioPharma, Inc.",72434448.0,USD,2021-12-31,3298780.0,,9625120.0,3692312.0,1997780.0,-5914416.0,5936695.0,98972688.0,7.684888
 AC,,,"Associated Capital Group, Inc.",873164096,USD,,,,,,,,,558823616.0,0.93743336
 ACA,,,"Arcosa, Inc.",2586189568,USD,,,,,,,,,3267434240.0,1.3321885
-ACAB,Financial Services,United States,Atlantic Coastal Acquisition Corp. II,298500000.0,USD,,,,,,,,,,
-ACABU,Financial Services,United States,Atlantic Coastal Acquisition Corp. II,,USD,,,,,,,,,,
-ACABW,Financial Services,United States,Atlantic Coastal Acquisition Corp. II,,USD,,,,,,,,,,
+ACAB,Financial Services,United States,Atlantic Coastal Acquisition Corp. II,298500000.0,USD,,,,,,,,,373124992.0,3316.6665
+ACABU,Financial Services,United States,Atlantic Coastal Acquisition Corp. II,,USD,,,,,,,,,378000000.0,3360.0
+ACABW,Financial Services,United States,Atlantic Coastal Acquisition Corp. II,,USD,,,,,,,,,,65.03333
 ACAD,Healthcare,,ACADIA Pharmaceuticals Inc.,2972601856.0,USD,2021-12-31,64430000.0,,617823000.0,96068000.0,66315000.0,-44657000.0,520706000.0,3610345216.0,5.2267575
 ACAH,Financial Services,,Atlantic Coastal Acquisition Corp.,423056256.0,USD,2021-12-31,,,392762.0,5941857.0,,-4058094.0,189608.0,419393664.0,
 ACAHU,Financial Services,,Atlantic Coastal Acquisition Corp.,,USD,2021-12-31,,,392762.0,5941857.0,,-4058094.0,189608.0,424568672.0,
 ACAHW,,,Atlantic Coastal Acquisition Corp.,,,2021-12-31,,,392762.0,5941857.0,,-4058094.0,189608.0,,
 ACAQ,,,Athena Consumer Acquisition Corp.,321742208,USD,,,,,,,,,69524280.0,3340.0002
-ACAX,Financial Services,United States,Alset Capital Acquisition Corp.,111762152.0,USD,2022-02-28,,,1758592.0,109814.0,,-45874.0,1708642.0,,
-ACAXR,,United States,Alset Capital Acquisition Corp.,,USD,,,,,,,,,,
-ACAXU,Financial Services,United States,Alset Capital Acquisition Corp.,,USD,2022-02-28,,,1758592.0,109814.0,,-45874.0,1708642.0,,
-ACAXW,Financial Services,United States,Alset Capital Acquisition Corp.,,USD,2022-02-28,,,1758592.0,109814.0,,-45874.0,1708642.0,,
+ACAX,Financial Services,United States,Alset Capital Acquisition Corp.,111762152.0,USD,2022-02-28,,,1758592.0,109814.0,,-45874.0,1708642.0,18618750.0,902.7273
+ACAXR,,United States,Alset Capital Acquisition Corp.,,USD,,,,,,,,,,11.818181
+ACAXU,Financial Services,United States,Alset Capital Acquisition Corp.,,USD,2022-02-28,,,1758592.0,109814.0,,-45874.0,1708642.0,18900000.0,916.36365
+ACAXW,Financial Services,United States,Alset Capital Acquisition Corp.,,USD,2022-02-28,,,1758592.0,109814.0,,-45874.0,1708642.0,,12.727273
 ACB,Healthcare,,Aurora Cannabis Inc.,654095168.0,USD,2021-12-31,414451000.0,310419000.0,604439000.0,122865000.0,574031000.0,-59607000.0,334081000.0,1175278720.0,0.2964485
 ACBA,Financial Services,,Ace Global Business Acquisition Limited,62114040.0,USD,2021-12-31,,,184492.0,204383.0,,-302661.0,122008.0,61275776.0,
 ACBAU,Financial Services,,Ace Global Business Acquisition Limited,,USD,2021-12-31,,,184492.0,204383.0,,-302661.0,122008.0,63516360.0,
@@ -84,16 +84,16 @@ ACI,,,"Albertsons Companies, Inc.",16356281344,USD,,,,,,,,,27160993792.0,7.44761
 ACII,,,Atlas Crest Investment Corp. II,423487488,USD,,,,,,,,,420214592.0,
 ACIU,Healthcare,,AC Immune SA,298854816.0,USD,2021-12-31,2910000.0,,202634000.0,20026000.0,8030000.0,-21100000.0,198216000.0,97519192.0,1.4558762
 ACIW,Technology,,"ACI Worldwide, Inc.",3176382976.0,USD,2021-12-31,1120606000.0,1019872000.0,937434000.0,754155000.0,110875000.0,165515000.0,122059000.0,5168485888.0,2.715297
-ACKIT,Financial Services,United States,Ackrell SPAC Partners I Co.,,USD,2021-12-31,1380000.0,,158964.0,2492480.0,,-714680.0,86792.0,,
-ACKIU,Financial Services,United States,Ackrell SPAC Partners I Co.,,USD,2021-12-31,1380000.0,,158964.0,2492480.0,,-714680.0,86792.0,,
+ACKIT,Financial Services,United States,Ackrell SPAC Partners I Co.,,USD,2021-12-31,1380000.0,,158964.0,2492480.0,,-714680.0,86792.0,185858640.0,
+ACKIU,Financial Services,United States,Ackrell SPAC Partners I Co.,,USD,2021-12-31,1380000.0,,158964.0,2492480.0,,-714680.0,86792.0,187857232.0,
 ACKIW,,,Ackrell SPAC Partners I Co.,,USD,2021-12-31,1380000.0,,158964.0,2492480.0,,-714680.0,86792.0,,
 ACLS,Technology,,"Axcelis Technologies, Inc.",1806787200.0,USD,2021-12-31,47394000.0,,619246000.0,150140000.0,63452000.0,46529000.0,294923000.0,2282319616.0,3.5548737
-ACLX,Healthcare,United States,"Arcellx, Inc.",390601056.0,USD,2021-12-31,,,112809000.0,14845000.0,10318000.0,-20698000.0,104617000.0,,
+ACLX,Healthcare,United States,"Arcellx, Inc.",390601056.0,USD,2021-12-31,,,112809000.0,14845000.0,10318000.0,-20698000.0,104617000.0,519688864.0,
 ACM,,,AECOM,9973161984,USD,,,,,,,,,13009136640.0,3.724269
 ACMR,Technology,,"ACM Research, Inc.",887507008.0,USD,2021-12-31,39140000.0,22957000.0,952934000.0,205939000.0,61204000.0,21961000.0,592565000.0,1142586752.0,1.7034949
 ACN,,,Accenture plc,190400888832,USD,,,,,,,,,225603960832.0,9.32795
 ACNB,Financial Services,,ACNB Corporation,297089344.0,USD,2021-12-31,37970000.0,34700000.0,,,34250000.0,,,-337602496.0,1.1051561
-ACON,Healthcare,United States,"Aclarion, Inc.",16191850.0,USD,2021-12-31,2000000.0,,732204.0,7618784.0,12636.0,-2965908.0,452530.0,,
+ACON,Healthcare,United States,"Aclarion, Inc.",16191850.0,USD,2021-12-31,2000000.0,,732204.0,7618784.0,12636.0,-2965908.0,452530.0,10524712.0,
 ACONW,Healthcare,United States,"Aclarion, Inc.",,USD,2021-12-31,2000000.0,,732204.0,7618784.0,12636.0,-2965908.0,452530.0,,
 ACOR,Healthcare,,"Acorda Therapeutics, Inc.",18020408.0,USD,2021-12-31,190942000.0,178670000.0,102157000.0,54025000.0,11133000.0,-11561000.0,45634000.0,180802752.0,0.092510715
 ACP,,,Aberdeen Income Credit Strategies Fund,220451360,USD,,,,,,,,,402481984.0,0.8119033
@@ -191,7 +191,7 @@ AFACW,Financial Services,,Arena Fortify Acquisition Corp.,,,2021-09-30,165949.0,
 AFAQ,Financial Services,,AF Acquisition Corp.,273560000.0,USD,2021-12-31,,,991302.0,225967.0,,-279900.0,781302.0,271236224.0,
 AFAQU,Financial Services,,AF Acquisition Corp.,,USD,2021-12-31,,,991302.0,225967.0,,-279900.0,781302.0,277676224.0,
 AFAQW,,,AF Acquisition Corp.,,USD,2021-12-31,,,991302.0,225967.0,,-279900.0,781302.0,,
-AFARU,Financial Services,Singapore,Aura FAT Projects Acquisition Corp,,USD,,,,,,,,,,
+AFARU,Financial Services,Singapore,Aura FAT Projects Acquisition Corp,,USD,,,,,,,,,24927764.0,1248.7499
 AFB,,,"AllianceBernstein National Municipal Income Fund, Inc.",334303200,USD,,,,,,,,,639279104.0,0.7620733
 AFBI,Financial Services,,"Affinity Bancshares, Inc.",101930440.0,USD,2021-12-31,48988000.0,48988000.0,,,3783000.0,,,28072144.0,0.8841936
 AFCG,Real Estate,,"AFC Gamma, Inc.",316083840.0,USD,2021-12-31,171418011.0,96572656.0,,,,,,282573280.0,0.9593146
@@ -255,14 +255,14 @@ AHPA,Financial Services,,Avista Public Acquisition Corp. II,289800000.0,USD,2021
 AHPAU,Financial Services,,Avista Public Acquisition Corp. II,,USD,2021-12-31,,,934513.0,438211.0,,,189971.0,291450304.0,
 AHPAW,,,Avista Public Acquisition Corp. II,,USD,2021-12-31,,,934513.0,438211.0,,,189971.0,,
 AHPI,Healthcare,,"Allied Healthcare Products, Inc.",10274662.0,USD,2021-12-31,3374871.0,,11827990.0,7443295.0,3510705.0,-1119920.0,183043.0,15536145.0,1.0702341
-AHRN,Financial Services,Cayman Islands,Ahren Acquisition Corp.,373498016.0,USD,2021-12-31,,,,,,-744569.0,,,
-AHRNU,Financial Services,Cayman Islands,Ahren Acquisition Corp.,,USD,2021-12-31,,,,,,-744569.0,,,
-AHRNW,Financial Services,Cayman Islands,Ahren Acquisition Corp.,,USD,2021-12-31,,,,,,-744569.0,,,
+AHRN,Financial Services,Cayman Islands,Ahren Acquisition Corp.,373498016.0,USD,2021-12-31,,,,,,-744569.0,,62407632.0,9960.0
+AHRNU,Financial Services,Cayman Islands,Ahren Acquisition Corp.,,USD,2021-12-31,,,,,,-744569.0,,63032632.0,10060.0
+AHRNW,Financial Services,Cayman Islands,Ahren Acquisition Corp.,,USD,2021-12-31,,,,,,-744569.0,,,270.0
 AHT,,,"Ashford Hospitality Trust, Inc.",255436304,USD,,,,,,,,,4050535680.0,3.9629004
 AI,,,"C3.ai, Inc.",1807260288,USD,,,,,,,,,2271243520.0,1.7357988
-AIB,Financial Services,United States,AIB Acquisition Corporation,111846864.0,USD,2021-12-31,,,,,,-17978.0,,,
-AIBBR,,United States,AIB Acquisition Corporation,,USD,,,,,,,,,,
-AIBBU,Financial Services,United States,AIB Acquisition Corporation,,USD,2021-12-31,,,,,,-17978.0,,,
+AIB,Financial Services,United States,AIB Acquisition Corporation,111846864.0,USD,2021-12-31,,,,,,-17978.0,,18789478.0,903.63635
+AIBBR,,United States,AIB Acquisition Corporation,,USD,,,,,,,,,,11.818181
+AIBBU,Financial Services,United States,AIB Acquisition Corporation,,USD,2021-12-31,,,,,,-17978.0,,19108228.0,919.0909
 AIC,,,Arlington Asset Investment Corp. 6.75% SR NT 25,650579008,USD,,,,,,,,,,
 AIF,,,Apollo Tactical Income Fund Inc.,198880000,USD,,,,,,,,,346949344.0,0.81723624
 AIG,,,"American International Group, Inc.",47173570560,USD,,,,,,,,,65425559552.0,0.75961363
@@ -292,7 +292,7 @@ AJX,,,Great Ajax Corp.,216065552,USD,,,,,,,,,1459730432.0,0.5600337
 AJXA,,,Great Ajax Corp. 7.25 CV SR NT 24,,USD,,,,,,,,,,
 AKA,,,a.k.a. Brands Holding Corp.,454127424,USD,,,,,,,,,1030518848.0,1.0928793
 AKAM,Technology,,"Akamai Technologies, Inc.",18065963008.0,USD,2021-12-31,2858937000.0,1976167000.0,1920434000.0,790341000.0,2350083000.0,199297000.0,1078195000.0,19746549760.0,3.9797256
-AKAN,Healthcare,United Kingdom,Akanda Corp.,245437408.0,USD,2021-09-30,6044902.0,973508.0,21169556.0,3304174.0,4038137.0,,20943152.0,,
+AKAN,Healthcare,United Kingdom,Akanda Corp.,245437408.0,USD,2021-09-30,6044902.0,973508.0,21169556.0,3304174.0,4038137.0,,20943152.0,208579136.0,339.59998
 AKBA,Healthcare,,"Akebia Therapeutics, Inc.",75247112.0,USD,2021-12-31,136048000.0,,272010000.0,256493000.0,40606000.0,-68009000.0,149800000.0,328912576.0,0.52824426
 AKIC,Financial Services,,Sports Ventures Acquisition Corp.,292041312.0,USD,2021-12-31,,,816960.0,771291.0,,-889316.0,440475.0,287639360.0,
 AKICU,Financial Services,,Sports Ventures Acquisition Corp.,,USD,2021-12-31,,,816960.0,771291.0,,-889316.0,440475.0,291759680.0,
@@ -334,22 +334,22 @@ ALLO,Healthcare,,"Allogene Therapeutics, Inc.",1199051776.0,USD,2021-12-31,69929
 ALLT,Technology,,Allot Ltd.,208182304.0,USD,2021-12-31,8252000.0,,135859000.0,55113000.0,23513000.0,-3302000.0,83968000.0,223709584.0,1.62525
 ALLY,,,Ally Financial Inc.,13079146496,USD,,,,,,,,,23814125568.0,0.933514
 ALNY,Healthcare,,"Alnylam Pharmaceuticals, Inc.",16107402240.0,USD,2021-12-31,997592000.0,675697000.0,2808576000.0,695710000.0,733633000.0,-223486000.0,2435564000.0,18194278400.0,21.088982
-ALOR,Financial Services,,ALSP Orchid Acquisition Corporation I,225224560.0,USD,,,,,,,,,,
+ALOR,Financial Services,,ALSP Orchid Acquisition Corporation I,225224560.0,USD,,,,,,,,,37550000.0,3340.0002
 ALORU,Financial Services,,ALSP Orchid Acquisition Corporation I,,USD,,,,,,,,,37587500.0,3366.6667
-ALORW,Financial Services,,ALSP Orchid Acquisition Corporation I,,USD,,,,,,,,,,
+ALORW,Financial Services,,ALSP Orchid Acquisition Corporation I,,USD,,,,,,,,,,85.0
 ALOT,Technology,,"AstroNova, Inc.",98535344.0,USD,2022-01-31,10289000.0,8154000.0,63778000.0,20035000.0,12535000.0,-299000.0,5276000.0,97257464.0,1.1858438
 ALPA,Financial Services,,Alpha Healthcare Acquisition Corp. III,191759296.0,USD,2021-12-31,,,973175.0,330007.0,,,774192.0,189527904.0,
 ALPAU,Financial Services,,Alpha Healthcare Acquisition Corp. III,,USD,2021-12-31,,,973175.0,330007.0,,,774192.0,193677424.0,
 ALPAW,,,Alpha Healthcare Acquisition Corp. III,,,2021-12-31,,,973175.0,330007.0,,,774192.0,,
 ALPN,Healthcare,,"Alpine Immune Sciences, Inc.",278708480.0,USD,2021-12-31,19628000.0,3380000.0,192013000.0,69778000.0,10553000.0,-15287000.0,162303000.0,81248248.0,2.188392
 ALPP,Industrials,,"Alpine 4 Holdings, Inc.",142447232.0,USD,2021-12-31,41694137.0,14066156.0,44406558.0,30420364.0,29556768.0,-12452538.0,3715666.0,267207040.0,2.6171718
-ALR,Healthcare,United States,AlerisLife Inc.,69798912.0,USD,2021-12-31,20770000.0,6364000.0,186833000.0,140907000.0,172507000.0,-10216000.0,78913000.0,,
+ALR,Healthcare,United States,AlerisLife Inc.,69798912.0,USD,2021-12-31,20770000.0,6364000.0,186833000.0,140907000.0,172507000.0,-10216000.0,78913000.0,11987375.0,0.38557553
 ALRM,Technology,,"Alarm.com Holdings, Inc.",3059332352.0,USD,2021-12-31,468267000.0,425345000.0,917620000.0,129339000.0,72192000.0,10837000.0,710621000.0,4014375936.0,5.1168637
 ALRS,Financial Services,,Alerus Financial Corporation,444636416.0,USD,2021-12-31,63208000.0,58730000.0,,,22097000.0,,,407241024.0,1.2448233
-ALSA,Financial Services,United States,Alpha Star Acquisition Corporation,145722752.0,USD,2021-12-31,,,,,,-41408.0,,,
-ALSAR,,United States,Alpha Star Acquisition Corporation,,USD,,,,,,,,,,
+ALSA,Financial Services,United States,Alpha Star Acquisition Corporation,145722752.0,USD,2021-12-31,,,,,,-41408.0,,25125000.0,1986.0001
+ALSAR,,United States,Alpha Star Acquisition Corporation,,USD,,,,,,,,,,41.88
 ALSAU,Financial Services,,Alpha Star Acquisition Corporation,,USD,2021-12-31,,,,,,-41408.0,,25600000.0,2024.0
-ALSAW,Financial Services,United States,Alpha Star Acquisition Corporation,,USD,2021-12-31,,,,,,-41408.0,,,
+ALSAW,Financial Services,United States,Alpha Star Acquisition Corporation,,USD,2021-12-31,,,,,,-41408.0,,,11.96
 ALSN,,,"Allison Transmission Holdings, Inc.",3634098432,USD,,,,,,,,,6646269952.0,5.5213094
 ALT,Healthcare,,"Altimmune, Inc.",195366608.0,USD,2021-12-31,1535112.0,,204126115.0,18275930.0,1447786.0,-23950428.0,190300776.0,106216896.0,0.8555745
 ALTG,,,Alta Equipment Group Inc.,364088256,USD,,,,,,,,,968249024.0,2.6792095
@@ -435,8 +435,8 @@ ANDE,Consumer Defensive,,"The Andersons, Inc.",1707207168,USD,2021-12-31,1165857
 ANEB,Healthcare,,"Anebulo Pharmaceuticals, Inc.",86608464,USD,2021-12-31,,,18963871.0,49944.0,,-1071122.0,18008990.0,134773024.0,4.3544602
 ANET,,,"Arista Networks, Inc.",35514662912,USD,,,,,,,,,39283089408.0,9.195576
 ANF,,,Abercrombie & Fitch Co.,1743347328,USD,,,,,,,,,2337439744.0,2.1699297
-ANGH,Communication Services,United Arab Emirates,Anghami Inc.,222386480,USD,2021-06-30,14359432.0,5933642.0,8328756.0,27893580.0,460996.0,,806739.0,,
-ANGHW,Communication Services,United Arab Emirates,Anghami Inc.,,USD,2021-06-30,14359432.0,5933642.0,8328756.0,27893580.0,460996.0,,806739.0,,
+ANGH,Communication Services,United Arab Emirates,Anghami Inc.,222386480,USD,2021-06-30,14359432.0,5933642.0,8328756.0,27893580.0,460996.0,,806739.0,12863590.0,
+ANGHW,Communication Services,United Arab Emirates,Anghami Inc.,,USD,2021-06-30,14359432.0,5933642.0,8328756.0,27893580.0,460996.0,,806739.0,,0.002865328
 ANGI,Communication Services,,Angi Inc.,2215001856,USD,2021-12-31,511650000.0,494552000.0,583071000.0,276509000.0,118267000.0,-29545000.0,428136000.0,4596750336.0,1.9124024
 ANGN,Healthcare,,Angion Biomedica Corp.,37447376,USD,2021-12-31,4369000.0,,91247000.0,11296000.0,4437000.0,14634000.0,88756000.0,-14281848.0,0.5800464
 ANGO,Healthcare,,"AngioDynamics, Inc.",816321088,USD,2022-02-28,25000000.0,25000000.0,127686000.0,49368000.0,43594000.0,-5584000.0,23890000.0,944029632.0,1.8841747
@@ -447,15 +447,15 @@ ANNX,Healthcare,,"Annexon, Inc.",98337176,USD,2021-12-31,34589000.0,,247693000.0
 ANSS,Technology,,"ANSYS, Inc.",23992223744,USD,2021-12-31,857954000.0,753576000.0,1638574000.0,778492000.0,208795000.0,237784000.0,668028000.0,33923272704.0,5.540951
 ANTE,Communication Services,,AirNet Technology Inc.,21354480,USD,2021-06-30,8626000.0,2556000.0,37576000.0,97998000.0,19410000.0,,2980000.0,2898668.0,0.677201
 ANTM,,,"Anthem, Inc.",121007792128,USD,,,,,,,,,101050580992.0,3.4108236
-ANTX,Healthcare,United States,"AN2 Therapeutics, Inc.",292903072,USD,,,,,,,,,,
+ANTX,Healthcare,United States,"AN2 Therapeutics, Inc.",292903072,USD,,,,,,,,,42674668.0,
 ANVS,,,"Annovis Bio, Inc.",77067400,USD,,,,,,,,,105321416.0,1.643454
 ANZU,Financial Services,,Anzu Special Acquisition Corp I,520625024,USD,2021-12-31,,,863167.0,2678173.0,,-963905.0,149845.0,516405472.0,
 ANZUU,Financial Services,,Anzu Special Acquisition Corp I,,USD,2021-12-31,,,863167.0,2678173.0,,-963905.0,149845.0,534999232.0,
 ANZUW,,,Anzu Special Acquisition Corp I,,USD,2021-12-31,,,863167.0,2678173.0,,-963905.0,149845.0,,
 AOD,,,Aberdeen Total Dynamic Dividend Fund,933064384,USD,,,,,,,,,992998592.0,0.80748177
-AOGO,Financial Services,United States,Arogo Capital Acquisition Corp.,106242648,USD,2021-12-31,,,,,,-143077.0,,,
+AOGO,Financial Services,United States,Arogo Capital Acquisition Corp.,106242648,USD,2021-12-31,,,,,,-143077.0,,25849124.0,1248.7499
 AOGOU,Financial Services,,Arogo Capital Acquisition Corp.,,USD,2021-12-31,,,,,,-143077.0,,25926750.0,1271.875
-AOGOW,Financial Services,United States,Arogo Capital Acquisition Corp.,,USD,2021-12-31,,,,,,-143077.0,,,
+AOGOW,Financial Services,United States,Arogo Capital Acquisition Corp.,,USD,2021-12-31,,,,,,-143077.0,,,22.125
 AOMR,,,"Angel Oak Mortgage, Inc.",405386528,USD,,,,,,,,,1704289024.0,0.81951416
 AON,,,Aon plc,61613731840,USD,,,,,,,,,73428271104.0,28.865389
 AORT,,,"Artivion, Inc.",815246144,USD,,,,,,,,,,
@@ -470,7 +470,7 @@ APACW,,,StoneBridge Acquisition Corporation,,USD,2021-12-31,,,994802.0,341388.0,
 APAM,,,Artisan Partners Asset Management Inc.,2166194432,USD,,,,,,,,,3210160384.0,8.398223
 APCA,,,AP Acquisition Corp.,,USD,,,,,,,,,,
 APCX,Technology,,AppTech Payments Corp.,27628290,USD,2021-12-31,2093172.0,67400.0,622649.0,7282464.0,188643.0,-3679014.0,8026.0,13927640.0,211.25
-APCXW,Technology,,AppTech Payments Corp.,,USD,2021-12-31,2093172.0,67400.0,622649.0,7282464.0,188643.0,-3679014.0,8026.0,,
+APCXW,Technology,,AppTech Payments Corp.,,USD,2021-12-31,2093172.0,67400.0,622649.0,7282464.0,188643.0,-3679014.0,8026.0,,4.177215
 APD,,,"Air Products and Chemicals, Inc.",51889573888,USD,,,,,,,,,69293064192.0,3.8274252
 APDN,Healthcare,,"Applied DNA Sciences, Inc.",13174912,USD,2021-12-31,,,8499421.0,2978891.0,2807852.0,-4633131.0,2748368.0,14394980.0,1.0774411
 APEI,Consumer Defensive,,"American Public Education, Inc.",366568416,USD,2021-12-31,243714000.0,151771000.0,202637000.0,83678000.0,180360000.0,17597000.0,122627000.0,555451328.0,0.89929223
@@ -508,9 +508,9 @@ APTS,,,"Preferred Apartment Communities, Inc.",,USD,,,,,,,,,3259205632.0,
 APTV,,,Aptiv PLC,28782688256,USD,,,,,,,,,33152987136.0,3.4702065
 APTX,Healthcare,,Aptinyx Inc.,60415944,USD,,,,,,,,,69548968.0,0.5390937
 APWC,Industrials,,Asia Pacific Wire & Cable Corporation Limited,29924416,USD,,,,,,,,,118401408.0,0.13141693
-APXI,Financial Services,Mexico,APx Acquisition Corp. I,216056256,USD,,,,,,,,,,
+APXI,Financial Services,Mexico,APx Acquisition Corp. I,216056256,USD,,,,,,,,,43211248.0,2505.0
 APXIU,Financial Services,,APx Acquisition Corp. I,,USD,,,,,,,,,43383752.0,2529.9998
-APXIW,Financial Services,Mexico,APx Acquisition Corp. I,,USD,,,,,,,,,,
+APXIW,Financial Services,Mexico,APx Acquisition Corp. I,,USD,,,,,,,,,,57.5
 APYX,Healthcare,,Apyx Medical Corporation,129795448,USD,,,,,,,,,317367744.0,2.3815541
 AQB,Consumer Defensive,,"AquaBounty Technologies, Inc.",95286992,USD,,,,,,,,,-75276392.0,0.4329564
 AQMS,Industrials,,"Aqua Metals, Inc.",71959776,USD,,,,,,,,,70073368.0,2.1791384
@@ -524,7 +524,7 @@ AR,,,Antero Resources Corporation,11050335232,USD,,,,,,,,,12009918464.0,2.277875
 ARAV,Healthcare,,"Aravive, Inc.",39490252,USD,,,,,,,,,-15028507.0,0.52712584
 ARAY,Healthcare,,Accuray Incorporated,246671136,USD,,,,,,,,,402705344.0,5.2882705
 ARBE,Technology,,Arbe Robotics Ltd.,507064320,USD,,,,,,,,,173969696.0,
-ARBEW,Technology,,Arbe Robotics Ltd.,,USD,,,,,,,,,,
+ARBEW,Technology,,Arbe Robotics Ltd.,,USD,,,,,,,,,,0.79715866
 ARBG,Financial Services,,Aequi Acquisition Corp.,283474976,USD,,,,,,,,,281116672.0,
 ARBGU,Financial Services,,Aequi Acquisition Corp.,,USD,,,,,,,,,286866656.0,
 ARBGW,,,Aequi Acquisition Corp.,,USD,,,,,,,,,,
@@ -601,10 +601,10 @@ ASAN,,,"Asana, Inc.",4996296704,USD,,,,,,,,,9242486784.0,20.165537
 ASAQ,,,Atlantic Avenue Acquisition Corp,309062496,USD,,,,,,,,,305713024.0,
 ASB,,,Associated Banc-Corp,2993976320,USD,,,,,,,,,4993478656.0,0.7729862
 ASC,,,Ardmore Shipping Corporation,214087104,USD,,,,,,,,,478262400.0,0.71716356
-ASCA,Financial Services,Singapore,A SPAC I Acquisition Corp.,86331424,USD,,,,,,,,,,
-ASCAR,,Singapore,A SPAC I Acquisition Corp.,,USD,,,,,,,,,,
-ASCAU,Financial Services,Singapore,A SPAC I Acquisition Corp.,,USD,,,,,,,,,,
-ASCAW,Financial Services,Singapore,A SPAC I Acquisition Corp.,,USD,,,,,,,,,,
+ASCA,Financial Services,Singapore,A SPAC I Acquisition Corp.,86331424,USD,,,,,,,,,14997770.0,662.00006
+ASCAR,,Singapore,A SPAC I Acquisition Corp.,,USD,,,,,,,,,,10.713333
+ASCAU,Financial Services,Singapore,A SPAC I Acquisition Corp.,,USD,,,,,,,,,15327770.0,676.6666
+ASCAW,Financial Services,Singapore,A SPAC I Acquisition Corp.,,USD,,,,,,,,,,8.0
 ASG,,,"Liberty All-Star Growth Fund, Inc.",348581344,USD,,,,,,,,,432155040.0,0.76148075
 ASGI,,,Aberdeen Standard Global Infrastructure Income Fund,59463652,USD,,,,,,,,,,
 ASGN,,,ASGN Incorporated,5910745088,USD,,,,,,,,,7255746048.0,3.2344973
@@ -641,10 +641,10 @@ ASYS,Technology,,"Amtech Systems, Inc.",127815120,USD,,,,,,,,,114532120.0,1.5216
 ASZ,,,Austerlitz Acquisition Corporation II,1932001536,USD,,,,,,,,,1921812352.0,
 ATA,,,Americas Technology Acquisition Corp.,148770000,USD,,,,,,,,,146249840.0,
 ATAI,Healthcare,,Atai Life Sciences N.V.,689441600,USD,,,,,,,,,435289120.0,1.5116279
-ATAK,Financial Services,United States,Aurora Technology Acquisition Corp.,257683504,USD,,,,,,,,,,
-ATAKR,,United States,Aurora Technology Acquisition Corp.,,USD,,,,,,,,,,
-ATAKU,Financial Services,United States,Aurora Technology Acquisition Corp.,,USD,,,,,,,,,,
-ATAKW,Financial Services,United States,Aurora Technology Acquisition Corp.,,USD,,,,,,,,,,
+ATAK,Financial Services,United States,Aurora Technology Acquisition Corp.,257683504,USD,,,,,,,,,49675000.0,3310.0
+ATAKR,,United States,Aurora Technology Acquisition Corp.,,USD,,,,,,,,,,50.0
+ATAKU,Financial Services,United States,Aurora Technology Acquisition Corp.,,USD,,,,,,,,,50525000.0,3366.6667
+ATAKW,Financial Services,United States,Aurora Technology Acquisition Corp.,,USD,,,,,,,,,,18.066668
 ATAQ,,,Altimar Acquisition Corp. III,190374832,USD,,,,,,,,,189359184.0,
 ATAX,Financial Services,,"America First Multifamily Investors, L.P.",374053120,USD,,,,,,,,,1229969152.0,2.9634168
 ATC,,,Atotech Limited,4147024640,USD,,,,,,,,,6126929408.0,4.7587132
