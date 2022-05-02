@@ -444,14 +444,17 @@ def download_ticker_list(country_code: str) -> list:
 
             ftp_server.quit()
 
-        if Path(nasdaq_list).is_file() and Path(non_nasdaq_list).is_file():
+        if Path(nasdaq_list).is_file():
             nasdaq_df = pd.read_csv(nasdaq_list, sep='|')
-            non_nasdaq_df = pd.read_csv(non_nasdaq_list, sep='|')
             nasdaq_df = nasdaq_df[(nasdaq_df['ETF'] == 'N') & (nasdaq_df['Test Issue'] == 'N') & (nasdaq_df['Financial Status'] == 'N')]
-            non_nasdaq_df = non_nasdaq_df[(non_nasdaq_df['ETF'] == 'N') & (non_nasdaq_df['Test Issue'] == 'N')]
             nasdaq_ticker_list = nasdaq_df['Symbol'].to_list()
+            ticker_list += nasdaq_ticker_list
+
+        if Path(non_nasdaq_list).is_file():
+            non_nasdaq_df = pd.read_csv(non_nasdaq_list, sep='|')
+            non_nasdaq_df = non_nasdaq_df[(non_nasdaq_df['ETF'] == 'N') & (non_nasdaq_df['Test Issue'] == 'N')]
             non_nasdaq_ticker_list = non_nasdaq_df['ACT Symbol'].to_list()
-            ticker_list = nasdaq_ticker_list + non_nasdaq_ticker_list
+            ticker_list += non_nasdaq_ticker_list
 
     if country_code.upper() == 'TW':
         """ TWSE data from: 
@@ -468,6 +471,8 @@ def download_ticker_list(country_code: str) -> list:
             df = download_csv_to_df(url)
             series = df['公司代號']
             ticker_list += [f'{ticker}{suffix}' for ticker in series.to_list()]
+
+    ticker_list = [t for t in ticker_list if "$" not in t]
 
     return ticker_list
 
