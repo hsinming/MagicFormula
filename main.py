@@ -246,8 +246,8 @@ def print_db(db_path):
         conn.close()
 
 
-def dict_to_csv(data: dict, csv_path: Path):
-    df = pd.DataFrame.from_dict(data, orient='index')
+def dict_to_csv(input_dict: dict, csv_path: Path):
+    df = pd.DataFrame.from_dict(input_dict, orient='index')
     df = df.sort_index()
     df.to_csv(csv_path, index_label='ticker')
 
@@ -270,6 +270,25 @@ def renew_column(input_dict: dict) -> dict:
 
 def chunker(seq: list, size: int) -> Generator:
     return (seq[pos: pos+size] for pos in range(0, len(seq), size))
+
+
+def is_complete(input_dict: dict, keys_to_check: list, min: int) -> bool:
+    check_list = []
+
+    for k in keys_to_check:
+
+        if input_dict.get(k) is not None:
+
+            if isinstance(input_dict[k], str) and input_dict[k] != '':
+                check_list.append(True)
+
+            if isinstance(input_dict[k], float) and not math.isnan(input_dict[k]):
+                check_list.append(True)
+
+        else:
+            check_list.append(False)
+
+    return check_list.count(True) >= min
 
 
 def _retrieve(chunk_id: int, tickers: list, metric: str, dict_proxy: dict, event: Event) -> int:
@@ -318,7 +337,7 @@ def _retrieve(chunk_id: int, tickers: list, metric: str, dict_proxy: dict, event
 def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -> dict:
     result = {}
 
-    # Loading order is important: load part csv last because it is usually newer.
+    # Loading order is important: load part csv in the last because it is usually newer.
     for file in sorted(save_root.glob(f'{fn_financial}*.csv')):
         print(f"Loading financial data from {file}...")
         df = pd.read_csv(file, index_col='ticker')
@@ -338,9 +357,8 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
             row = result.get(t)
 
             if isinstance(row, dict):
-                is_incomplete = [(isinstance(row[k], str) and row[k] == '') or (isinstance(row[k], float) and math.isnan(row[k])) for k in keys].count(True) >= 2
 
-                if is_incomplete:
+                if not is_complete(row, keys, 1):
                     tickers_need_update.append(t)
                     continue
 
