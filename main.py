@@ -97,7 +97,7 @@ class FinancialStatement(object):
         return max(0, (self.current_assets - self.excess_cash - (self.current_liabilities - (self.total_debt - self.longterm_debt))))
 
     @property
-    def net_PPE(self):
+    def net_property_plant_equipment(self):
         try:
             return self.sheet[self.ticker]["NetPPE"]
         except Exception as e:
@@ -106,7 +106,7 @@ class FinancialStatement(object):
 
     @property
     def net_fixed_assets(self):
-        return self.net_PPE
+        return self.net_property_plant_equipment
 
     @property
     def market_cap(self):
@@ -162,10 +162,26 @@ class FinancialStatement(object):
             print(f"Missing information for {self.ticker}\n{e}")
             return 'not available'
 
+    @property
+    def country(self):
+        try:
+            return self.sheet[self.ticker]["country"]
+        except Exception as e:
+            print(f"Missing information for {self.ticker}\n{e}")
+            return 'not available'
+
+    @property
+    def name(self):
+        try:
+            return self.sheet[self.ticker]["longName"]
+        except Exception as e:
+            print(f"Missing information for {self.ticker}\n{e}")
+            return 'not available'
+
 
 def insert_data(conn, ticker_info):
-    sql = ''' REPLACE INTO stock_table (ticker, sector, market_cap, roc, earnings_yield, most_recent)
-              VALUES(?,?,?,?,?,?) '''
+    sql = ''' REPLACE INTO stock_table (ticker, name, most_recent, roc, earnings_yield)
+              VALUES(?,?,?,?,?) '''
     cur = conn.cursor()
     cur.execute(sql, ticker_info)
     conn.commit()
@@ -178,11 +194,10 @@ def update_db(tickers, db_path):
     cursor.execute("DROP TABLE IF EXISTS stock_table")
     cursor.execute('''CREATE TABLE IF NOT EXISTS stock_table (
     ticker text PRIMARY KEY,
-    sector text,
-    market_cap real,
+    name text,
+    most_recent DATE,    
     roc real NOT NULL,
-    earnings_yield real NOT NULL,
-    most_recent DATE
+    earnings_yield real NOT NULL    
     );''')
 
     fs = FinancialStatement(financial_dict)
@@ -191,7 +206,7 @@ def update_db(tickers, db_path):
 
         try:
             fs.set_ticker(ticker)
-            data = (ticker, fs.sector, fs.market_cap, fs.roc, fs.earnings_yield, fs.financial_date)
+            data = (ticker, fs.name, fs.financial_date, fs.roc, fs.earnings_yield)
             insert_data(conn, data)
 
         except Exception as e:
@@ -323,7 +338,7 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
             row = result.get(t)
 
             if isinstance(row, dict):
-                is_incomplete = any((isinstance(row[k], str) and row[k] == '') or (isinstance(row[k], float) and math.isnan(row[k])) for k in keys)
+                is_incomplete = [(isinstance(row[k], str) and row[k] == '') or (isinstance(row[k], float) and math.isnan(row[k])) for k in keys].count(True) >= 2
 
                 if is_incomplete:
                     tickers_need_update.append(t)
@@ -474,12 +489,29 @@ def remove_outdated(input_dict: dict) -> dict:
 
 def remove_small_marketcap(input_dict: dict) -> dict:
     print(f"\nThe company with market cap < {args.min_market_cap} will be excluded.")
-    return {k: v for k, v in input_dict.items() if v['marketCap'] >= args.min_market_cap}
+    result = {}
+
+    for k, v in input_dict.items():
+        try:
+            market_cap = int(v['marketCap'])
+        except:
+            continue
+
+        if market_cap >= args.min_market_cap:
+            result[k] = v
+
+    return result
 
 
 def remove_sector(input_dict: dict) -> dict:
-    print(f"\nThe company sector in {exclude_sectors} will be excluded.")
-    return {k: v for k, v in input_dict.items() if v['sector'] not in exclude_sectors}
+    print(f"\nThe company sector in {excluded_sectors} will be excluded.")
+    return {k: v for k, v in input_dict.items() if v['sector'] not in excluded_sectors}
+
+
+def remove_country(input_dict: dict) -> dict:
+    accepted_country = country_code[args.country.upper()]
+    print(f"\nThe company country not {accepted_country} will be excluded.")
+    return {k: v for k, v in input_dict.items() if v['country'] == accepted_country}
 
 
 def process_args():
@@ -516,6 +548,7 @@ def main():
     financial_dict = remove_outdated(financial_dict)
     financial_dict = remove_small_marketcap(financial_dict)
     financial_dict = remove_sector(financial_dict)
+    financial_dict = remove_country(financial_dict)
     update_db(financial_dict.keys(), save_root / f"{fn_stock_rank}.db")
     rank_stocks(save_root / f"{fn_stock_rank}.db", save_root / f"{fn_stock_rank}.csv")
 
@@ -534,7 +567,7 @@ if __name__ == '__main__':
     financial_keys = ["asOfDate", "TotalDebt", "LongTermDebt", "CurrentAssets", "CurrentLiabilities",
                       "NetPPE", "EBIT", "CashCashEquivalentsAndShortTermInvestments"]
     key_stats_keys = ["enterpriseValue", "priceToBook"]
-    price_keys = ["marketCap", "currency", "longName"]
+    price_keys = ["longName", "marketCap", "currency"]
     profile_keys = ["sector", "country"]
     all_keys = profile_keys + price_keys + financial_keys + key_stats_keys
 
@@ -542,7 +575,7 @@ if __name__ == '__main__':
     keys_list = [financial_keys, profile_keys, price_keys, key_stats_keys]
     force_renew_list = [args.force_financial, args.force_profile, args.force_price, args.force_key_stats]
 
-    exclude_sectors = ["Financial Services", "Utilities"]
+    excluded_sectors = ["Financial Services", "Utilities"]
 
     start = time.time()
     main()
