@@ -237,16 +237,20 @@ def dict_to_csv(data: dict, csv_path: Path):
     df.to_csv(csv_path, index_label='ticker')
 
 
-def download_csv_to_df(url: str) -> pd.DataFrame:
-    tmp_csv = Path('tmp.csv')
+def renew_column(input_dict: dict) -> dict:
+    result = {}
 
-    with tmp_csv.open('wb') as fp:
-        content = requests.get(url).content
-        fp.write(content)
+    for ticker, row in input_dict.items():
+        new_row = {k: math.nan for k in all_keys}
 
-    df = pd.read_csv(tmp_csv)
-    tmp_csv.unlink()
-    return df
+        for k, v in row.items():
+
+            if k in all_keys:
+                new_row[k] = v
+
+        result[ticker] = new_row
+
+    return result
 
 
 def chunker(seq: list, size: int) -> Generator:
@@ -261,7 +265,7 @@ def _retrieve(chunk_id: int, tickers: list, metric: str, dict_proxy: dict, event
         thread_start = time.time()
 
         for t in tickers:
-            stock = Ticker(t)
+            stock = Ticker(t, country=country_code[args.country.upper()])
             row_dict = dict_proxy.get(t, {k: '' for k in all_keys})
             data = {t: ''}
 
@@ -299,12 +303,14 @@ def _retrieve(chunk_id: int, tickers: list, metric: str, dict_proxy: dict, event
 def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -> dict:
     result = {}
 
-    # Read all saved csv files, renew part.csv first.
-    for file in save_root.glob(f"{fn_financial}*.csv"):    # TODO renew part.csv explicitly
+    # Loading order is important: load part csv last because it is usually newer.
+    for file in sorted(save_root.glob(f'{fn_financial}*.csv')):
         print(f"Loading financial data from {file}...")
         df = pd.read_csv(file, index_col='ticker')
         df = df.sort_index()
-        result.update(df.to_dict('index'))
+        old_dict = df.to_dict('index')
+        new_dict = renew_column(old_dict)
+        result.update(new_dict)
 
     tickers_need_update = []
 
@@ -317,8 +323,9 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
             row = result.get(t)
 
             if isinstance(row, dict):
+                is_incomplete = any((isinstance(row[k], str) and row[k] == '') or (isinstance(row[k], float) and math.isnan(row[k])) for k in keys)
 
-                if all((isinstance(row[k], str) and row[k] == '') or (isinstance(row[k], float) and math.isnan(row[k])) for k in keys):
+                if is_incomplete:
                     tickers_need_update.append(t)
                     continue
 
@@ -360,6 +367,18 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
         dict_to_csv(result, save_root / f"{fn_financial}.csv")
     
     return result
+
+
+def download_csv_to_df(url: str) -> pd.DataFrame:
+    tmp_csv = Path('tmp.csv')
+
+    with tmp_csv.open('wb') as fp:
+        content = requests.get(url).content
+        fp.write(content)
+
+    df = pd.read_csv(tmp_csv)
+    tmp_csv.unlink()
+    return df
 
 
 def download_ticker_list(country_code: str) -> list:
@@ -507,16 +526,16 @@ if __name__ == '__main__':
     save_root.mkdir(0o755, exist_ok=True)
 
     financial_dict = {}
-
+    country_code = {'US': 'United States', 'TW': 'Taiwan'}
     fn_ticker_list = 'ticker_list'
     fn_financial = 'financial'
     fn_stock_rank = 'stock_rank'
 
-    financial_keys = ["asOfDate", "currencyCode", "TotalDebt", "LongTermDebt", "CurrentAssets", "CurrentLiabilities",
+    financial_keys = ["asOfDate", "TotalDebt", "LongTermDebt", "CurrentAssets", "CurrentLiabilities",
                       "NetPPE", "EBIT", "CashCashEquivalentsAndShortTermInvestments"]
     key_stats_keys = ["enterpriseValue", "priceToBook"]
-    price_keys = ["marketCap"]
-    profile_keys = ["sector"]
+    price_keys = ["marketCap", "currency", "longName"]
+    profile_keys = ["sector", "country"]
     all_keys = profile_keys + price_keys + financial_keys + key_stats_keys
 
     metric_list = ["financial", "profile", "price", "key_stats"]
