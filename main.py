@@ -374,18 +374,17 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
 
             with concurrent.futures.ThreadPoolExecutor(args.n_thread) as executor:
                 chunks = list(chunker(tickers_need_update, args.batch_size))
-                tasks = {executor.submit(_retrieve, i, chunk, metric, dict_proxy, event): i
-                         for i, chunk in enumerate(chunks)}
+                tasks = [executor.submit(_retrieve, i, chunk, metric, dict_proxy, event) for i, chunk in enumerate(chunks)]
                 n_banned = 10
                 last_n_queue = deque([], n_banned)
                 success_counter = 0
                 part_csv_path = save_root / f"{fn_financial}_part.csv"
 
-                for future in concurrent.futures.as_completed(tasks.keys()):
+                for future in concurrent.futures.as_completed(tasks):
                     success = future.result()
                     success_counter += success
                     last_n_queue.append(success)
-                    is_banned = len(last_n_queue) == n_banned and all(x == 0 for x in last_n_queue)
+                    is_banned = last_n_queue.count(0) == n_banned
 
                     if is_banned:
                         print(f"\nBanned by yahoo finance API.")
