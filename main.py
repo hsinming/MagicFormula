@@ -288,7 +288,7 @@ def _retrieve(chunk_id: int, tickers: list, metric: str, dict_proxy: dict, event
         thread_start = time.time()
 
         for t in tickers:
-            stock = Ticker(t, country=country_code[args.country.upper()], status_forcelist=[429, 404, 500, 502, 503, 504])
+            stock = Ticker(t, country=country_code[args.country.upper()])
             row_dict = dict_proxy.get(t, {k: '' for k in all_keys})
             data = {t: ''}
 
