@@ -567,8 +567,8 @@ if __name__ == '__main__':
     fn_financial = 'financial'
     fn_stock_rank = 'stock_rank'
 
-    financial_keys = ["asOfDate", "TotalDebt", "LongTermDebt", "CurrentAssets", "CurrentLiabilities",
-                      "NetPPE", "EBIT", "CashCashEquivalentsAndShortTermInvestments"]
+    financial_keys = ["asOfDate", "EBIT", "TotalDebt", "LongTermDebt", "CurrentAssets", "CurrentLiabilities",
+                      "NetPPE", "CashCashEquivalentsAndShortTermInvestments"]
     key_stats_keys = ["priceToBook"]
     price_keys = ["longName", "marketCap", "currency"]
     profile_keys = ["sector", "country"]
