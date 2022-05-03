@@ -36,59 +36,53 @@ class FinancialStatement(object):
 
     @property
     def ebit(self):
-        try:
-            return self.sheet[self.ticker]["EBIT"]
-        except Exception as e:
-            print(f"Missing information for {self.ticker}\n{e}")
-            return 0
+        return self.sheet[self.ticker]["EBIT"]
 
     @property
     def current_assets(self):
-        try:
-            return self.sheet[self.ticker]["CurrentAssets"]
-        except Exception as e:
-            print(f"Missing information for {self.ticker}\n{e}")
-            return 0
+        result = self.sheet[self.ticker]["CurrentAssets"]
+        if math.isnan(result):
+            print(f"Missing current assets for {self.ticker}")
+            result = 0
+        return result
 
     @property
     def current_liabilities(self):
-        try:
-            return self.sheet[self.ticker]["CurrentLiabilities"]
-        except Exception as e:
-            print(f"Missing information for {self.ticker}\n{e}")
-            return 0
+        result = self.sheet[self.ticker]["CurrentLiabilities"]
+        if math.isnan(result):
+            print(f"Missing current liabilities for {self.ticker}")
+            result = 0
+        return result
 
     @property
     def total_debt(self):
-        try:
-            return self.sheet[self.ticker]["TotalDebt"]
-        except Exception as e:
-            print(f"Missing information for {self.ticker}\n{e}")
-            return 0
+        return self.sheet[self.ticker]["TotalDebt"]
 
     @property
     def longterm_debt(self):
-        try:
-            return self.sheet[self.ticker]["LongTermDebt"]
-        except Exception as e:
-            print(f"Missing information for {self.ticker}\n{e}")
-            return 0
+        result = self.sheet[self.ticker]["LongTermDebt"]
+        if math.isnan(result):
+            print(f"Missing longterm debt for {self.ticker}")
+            result = 0
+        return result
 
     @property
     def total_cash(self):
-        try:
-            return self.sheet[self.ticker]["CashCashEquivalentsAndShortTermInvestments"]
-        except Exception as e:
-            print(f"Missing information for {self.ticker}\n{e}")
-            return 0
+        result = self.sheet[self.ticker]["CashCashEquivalentsAndShortTermInvestments"]
+        if math.isnan(result):
+            print(f"Missing total cash for {self.ticker}")
+            result = 0
+        return result
 
     @property
     def excess_cash(self):
-        try:
-            return self.total_cash - max(0, self.current_liabilities - self.current_assets + self.total_cash)
-        except Exception as e:
-            print(f"Missing information for {self.ticker}\n{e}")
-            return 0
+        """ There are many definitions of excess cash.
+        definition 1 : https://www.valupaedia.com/index.php/business-dictionary/552-excess-cash
+        excess_cash = self.total_cash - max(0, self.current_liabilities - (self.current_assets - self.total_cash))
+        definition 2: https://www.quant-investing.com/glossary/excess-cash
+        excess_cash = min(self.total_cash, max(self.current_assets - 2.0 * self.current_liabilities, 0))
+        """
+        return self.total_cash - max(0, self.current_liabilities - (self.current_assets - self.total_cash))
 
     @property
     def net_working_capital(self):
@@ -101,32 +95,34 @@ class FinancialStatement(object):
         try:
             return self.sheet[self.ticker]["NetPPE"]
         except Exception as e:
-            print(f"Missing information for {self.ticker}\n{e}")
+            print(f"Missing net PPE for {self.ticker}\n{e}")
             return 0
 
     @property
     def net_fixed_assets(self):
+        """
+        definition 1: https://www.valuesignals.com/Glossary/Details/Net_Fixed_Assets/13381
+        Net fixed assets = net PPE
+        definition 2: https://www.quant-investing.com/glossary/net-fixed-assets
+        Net Fixed Assets = Total Assets - Total Current Assets - Total Intangible assets
+        """
         return self.net_property_plant_equipment
 
     @property
     def market_cap(self):
         """ https://www.valuesignals.com/Glossary/Details/Market_Capitalization/13381
         """
-        try:
-            return self.sheet[self.ticker]["marketCap"]
-        except Exception as e:
-            print(f"Missing information for {self.ticker}\n{e}")
-            return 0
+        return self.sheet[self.ticker]["marketCap"]
 
     @property
     def enterprise_value(self):
-        """ https://www.valuesignals.com/Glossary/Details/Enterprise_Value
         """
-        try:
-            return self.sheet[self.ticker]["enterpriseValue"]
-        except Exception as e:
-            print(f"Missing information for {self.ticker}\n{e}")
-            return 0
+        definition 1: https://www.quant-investing.com/glossary/enterprise-value
+        EV = market cap + long-term debt + minority interest + preferred stock - excess cash
+        definition 2: https://www.valuesignals.com/Glossary/Details/Enterprise_Value/13381
+        EV = market cap + total debt + minority interest + preferred stock - total cash
+        """
+        return self.market_cap + self.longterm_debt - self.excess_cash
 
     @property
     def roc(self):
@@ -140,43 +136,27 @@ class FinancialStatement(object):
 
     @property
     def book_market_ratio(self):
-        try:
-            return 1 / self.sheet[self.ticker]["priceToBook"]
-        except Exception as e:
-            print(f"Missing information for {self.ticker}\n{e}")
-            return 0
+        result = 1 / self.sheet[self.ticker]["priceToBook"]
+        if math.isnan(result):
+            print(f"Missing book market ratio for {self.ticker}")
+            result = 0
+        return result
 
     @property
     def sector(self):
-        try:
-            return self.sheet[self.ticker]["sector"]
-        except Exception as e:
-            print(f"Missing information for {self.ticker}\n{e}")
-            return 'not available'
+        return self.sheet[self.ticker]["sector"]
 
     @property
     def financial_date(self):
-        try:
-            return self.sheet[self.ticker]["asOfDate"]
-        except Exception as e:
-            print(f"Missing information for {self.ticker}\n{e}")
-            return 'not available'
+        return self.sheet[self.ticker]["asOfDate"]
 
     @property
     def country(self):
-        try:
-            return self.sheet[self.ticker]["country"]
-        except Exception as e:
-            print(f"Missing information for {self.ticker}\n{e}")
-            return 'not available'
+        return self.sheet[self.ticker]["country"]
 
     @property
     def name(self):
-        try:
-            return self.sheet[self.ticker]["longName"]
-        except Exception as e:
-            print(f"Missing information for {self.ticker}\n{e}")
-            return 'not available'
+        return self.sheet[self.ticker]["longName"]
 
 
 def insert_data(conn, ticker_info):
@@ -515,12 +495,13 @@ def remove_small_marketcap(input_dict: dict) -> dict:
 
     for k, v in input_dict.items():
         try:
-            market_cap = int(v['marketCap'])
+            market_cap = float(v['marketCap'])
         except:
             continue
 
         if market_cap >= args.min_market_cap:
             result[k] = v
+            result[k]['marketCap'] = float(result[k]['marketCap'])
 
     return result
 
@@ -588,7 +569,7 @@ if __name__ == '__main__':
 
     financial_keys = ["asOfDate", "TotalDebt", "LongTermDebt", "CurrentAssets", "CurrentLiabilities",
                       "NetPPE", "EBIT", "CashCashEquivalentsAndShortTermInvestments"]
-    key_stats_keys = ["enterpriseValue", "priceToBook"]
+    key_stats_keys = ["priceToBook"]
     price_keys = ["longName", "marketCap", "currency"]
     profile_keys = ["sector", "country"]
     all_keys = profile_keys + price_keys + financial_keys + key_stats_keys
