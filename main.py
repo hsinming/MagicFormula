@@ -39,6 +39,14 @@ class FinancialStatement(object):
         return self.sheet[self.ticker]["EBIT"]
 
     @property
+    def total_assets(self):
+        return self.sheet[self.ticker]["TotalAssets"]
+
+    @property
+    def total_debt(self):
+        return self.sheet[self.ticker]["TotalDebt"]
+
+    @property
     def current_assets(self):
         result = self.sheet[self.ticker]["CurrentAssets"]
         if math.isnan(result):
@@ -55,14 +63,18 @@ class FinancialStatement(object):
         return result
 
     @property
-    def total_debt(self):
-        return self.sheet[self.ticker]["TotalDebt"]
-
-    @property
     def longterm_debt(self):
         result = self.sheet[self.ticker]["LongTermDebt"]
         if math.isnan(result):
             print(f"Missing longterm debt for {self.ticker}")
+            result = 0
+        return result
+
+    @property
+    def intangible_assets(self):
+        result = self.sheet[self.ticker]["GoodwillAndOtherIntangibleAssets"]
+        if math.isnan(result):
+            print(f"Missing intangible assets for {self.ticker}")
             result = 0
         return result
 
@@ -85,12 +97,6 @@ class FinancialStatement(object):
         return self.total_cash - max(0, self.current_liabilities - (self.current_assets - self.total_cash))
 
     @property
-    def net_working_capital(self):
-        """ https://www.valuesignals.com/Glossary/Details/Net_Working_Capital?securityId=13381
-        """
-        return max(0, (self.current_assets - self.excess_cash - (self.current_liabilities - (self.total_debt - self.longterm_debt))))
-
-    @property
     def net_property_plant_equipment(self):
         try:
             return self.sheet[self.ticker]["NetPPE"]
@@ -106,7 +112,14 @@ class FinancialStatement(object):
         definition 2: https://www.quant-investing.com/glossary/net-fixed-assets
         Net Fixed Assets = Total Assets - Total Current Assets - Total Intangible assets
         """
-        return self.net_property_plant_equipment
+        return self.total_assets - self.current_assets - self.intangible_assets
+
+    @property
+    def net_working_capital(self):
+        """ https://www.valuesignals.com/Glossary/Details/Net_Working_Capital?securityId=13381
+        """
+        return max(0, (self.current_assets - self.excess_cash - (
+                    self.current_liabilities - (self.total_debt - self.longterm_debt))))
 
     @property
     def market_cap(self):
@@ -567,8 +580,8 @@ if __name__ == '__main__':
     fn_financial = 'financial'
     fn_stock_rank = 'stock_rank'
 
-    financial_keys = ["asOfDate", "EBIT", "TotalDebt", "LongTermDebt", "CurrentAssets", "CurrentLiabilities",
-                      "NetPPE", "CashCashEquivalentsAndShortTermInvestments"]
+    financial_keys = ["asOfDate", "EBIT", "TotalAssets", "TotalDebt", "LongTermDebt", "CurrentAssets", "CurrentLiabilities",
+                      "GoodwillAndOtherIntangibleAssets", "CashCashEquivalentsAndShortTermInvestments"]
     key_stats_keys = ["priceToBook"]
     price_keys = ["longName", "marketCap", "currency"]
     profile_keys = ["sector", "country"]
