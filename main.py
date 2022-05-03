@@ -112,7 +112,7 @@ class FinancialStatement(object):
         definition 2: https://www.quant-investing.com/glossary/net-fixed-assets
         Net Fixed Assets = Total Assets - Total Current Assets - Total Intangible assets
         """
-        return self.total_assets - self.current_assets - self.intangible_assets
+        return self.net_property_plant_equipment
 
     @property
     def net_working_capital(self):
@@ -149,11 +149,7 @@ class FinancialStatement(object):
 
     @property
     def book_market_ratio(self):
-        result = 1 / self.sheet[self.ticker]["priceToBook"]
-        if math.isnan(result):
-            print(f"Missing book market ratio for {self.ticker}")
-            result = 0
-        return result
+        return self.sheet[self.ticker]["bookValue"] / self.sheet[self.ticker]["regularMarketPrice"]
 
     @property
     def sector(self):
@@ -292,7 +288,7 @@ def _retrieve(chunk_id: int, tickers: list, metric: str, dict_proxy: dict, event
         thread_start = time.time()
 
         for t in tickers:
-            stock = Ticker(t, country=country_code[args.country.upper()])
+            stock = Ticker(t, country=country_code[args.country.upper()], status_forcelist=[429, 404, 500, 502, 503, 504])
             row_dict = dict_proxy.get(t, {k: '' for k in all_keys})
             data = {t: ''}
 
@@ -581,9 +577,9 @@ if __name__ == '__main__':
     fn_stock_rank = 'stock_rank'
 
     financial_keys = ["asOfDate", "EBIT", "TotalAssets", "TotalDebt", "LongTermDebt", "CurrentAssets", "CurrentLiabilities",
-                      "GoodwillAndOtherIntangibleAssets", "CashCashEquivalentsAndShortTermInvestments"]
-    key_stats_keys = ["priceToBook"]
-    price_keys = ["longName", "marketCap", "currency"]
+                      "GoodwillAndOtherIntangibleAssets", "NetPPE", "CashCashEquivalentsAndShortTermInvestments"]
+    key_stats_keys = ["bookValue"]
+    price_keys = ["longName", "marketCap", "currency", "regularMarketPrice"]
     profile_keys = ["sector", "country"]
     all_keys = profile_keys + price_keys + financial_keys + key_stats_keys
 
