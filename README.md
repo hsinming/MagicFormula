@@ -3,6 +3,8 @@ A python implementation of the Magic Formula Investing described in [The Little 
 
 This [site](https://www.valuesignals.com/Glossary/Details/Greenblatt_Magic_Formula/13381) explains how it works.
 
+I also found some glossary at this [site](https://www.quant-investing.com/glossary).
+
 ## Getting started
 
 #### Step 1: Install Anaconda [tutorial](https://docs.anaconda.com/anaconda/install/index.html)
