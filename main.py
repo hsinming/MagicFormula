@@ -165,7 +165,7 @@ class FinancialStatement(object):
 
     @property
     def name(self):
-        return self.sheet[self.ticker]["displayName"]
+        return self.sheet[self.ticker]["longName"]
 
 
 def insert_data(conn, ticker_info):
@@ -574,7 +574,7 @@ if __name__ == '__main__':
     financial_keys = ["asOfDate", "EBIT", "TotalAssets", "TotalDebt", "LongTermDebt", "CurrentAssets", "CurrentLiabilities",
                       "GoodwillAndOtherIntangibleAssets", "NetPPE", "CashCashEquivalentsAndShortTermInvestments"]
     profile_keys = ["sector", "country"]
-    quotes_keys = ["displayName", "currency", "marketCap", "bookValue", "regularMarketPrice"]
+    quotes_keys = ["longName", "currency", "marketCap", "bookValue", "regularMarketPrice"]
     all_keys = profile_keys + quotes_keys + financial_keys
 
     metric_list = ["financial", "profile", "quotes"]
