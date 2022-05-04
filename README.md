@@ -25,8 +25,7 @@ There are three flags to be aware of:
 * `-t`    Thread number, default=1
 * `-b`    Batch size, default=1
 * `-m`    Minimal market cap, default=100,000,000
-* `--price`    forcefully renew price
-* `--key-stats`    forcefully renew key stats
+* `--quotes`    forcefully renew quotes
 * `--profile`    forcefully renew summary profile
 * `--financial`    forcefully renew financial statements
 

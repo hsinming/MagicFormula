@@ -165,7 +165,7 @@ class FinancialStatement(object):
 
     @property
     def name(self):
-        return self.sheet[self.ticker]["longName"]
+        return self.sheet[self.ticker]["displayName"]
 
 
 def insert_data(conn, ticker_info):
@@ -176,7 +176,7 @@ def insert_data(conn, ticker_info):
     conn.commit()
 
 
-def update_db(tickers, db_path):
+def update_db(financial_dict, db_path):
     print("Updating database...")
     conn = sq.connect(db_path, detect_types=sq.PARSE_DECLTYPES)
     cursor = conn.cursor()
@@ -191,7 +191,7 @@ def update_db(tickers, db_path):
 
     fs = FinancialStatement(financial_dict)
 
-    for ticker in tickers:
+    for ticker in financial_dict.keys():
 
         try:
             fs.set_ticker(ticker)
@@ -261,7 +261,7 @@ def chunker(seq: list, size: int) -> Generator:
     return (seq[pos: pos+size] for pos in range(0, len(seq), size))
 
 
-def is_complete(input_dict: dict, keys_to_check: list, min: int) -> bool:
+def is_complete(input_dict: dict, keys_to_check: list, minimum_got: int) -> bool:
     check_list = []
 
     for k in keys_to_check:
@@ -277,7 +277,7 @@ def is_complete(input_dict: dict, keys_to_check: list, min: int) -> bool:
         else:
             check_list.append(False)
 
-    return check_list.count(True) >= min
+    return check_list.count(True) >= minimum_got
 
 
 def _retrieve(chunk_id: int, tickers: list, metric: str, dict_proxy: dict, event: Event) -> int:
@@ -288,7 +288,7 @@ def _retrieve(chunk_id: int, tickers: list, metric: str, dict_proxy: dict, event
         thread_start = time.time()
 
         for t in tickers:
-            stock = Ticker(t, country=country_code[args.country.upper()])
+            stock = Ticker(t, country=yahoo_country)
             row_dict = dict_proxy.get(t, {k: '' for k in all_keys})
             data = {t: ''}
 
@@ -301,11 +301,8 @@ def _retrieve(chunk_id: int, tickers: list, metric: str, dict_proxy: dict, event
                     data.loc[:, 'asOfDate'] = data.loc[:, 'asOfDate'].astype('str')
                     data = data.to_dict('index')          # dict like {index -> {column -> value}}
 
-            elif metric == 'key_stats':
-                data = stock.key_stats
-
-            elif metric == 'price':
-                data = stock.price
+            elif metric == 'quotes':
+                data = stock.quotes
 
             elif metric == 'profile':
                 data = stock.summary_profile
@@ -505,12 +502,12 @@ def remove_small_marketcap(input_dict: dict) -> dict:
     for k, v in input_dict.items():
         try:
             market_cap = float(v['marketCap'])
-        except:
+        except Exception:
             continue
 
-        if market_cap >= args.min_market_cap:
+        if not math.isnan(market_cap) and market_cap >= args.min_market_cap:
             result[k] = v
-            result[k]['marketCap'] = float(result[k]['marketCap'])
+            result[k]['marketCap'] = market_cap
 
     return result
 
@@ -534,10 +531,8 @@ def process_args():
                         help='Number of tickers in a batch')
     parser.add_argument('--thread', '-t', type=int, default=1, dest='n_thread',
                         help='Number of threads in parallel')
-    parser.add_argument('--price', action='store_true', dest='force_price',
-                        help='Renew price')
-    parser.add_argument('--key-stats', action='store_true', dest='force_key_stats',
-                        help='Renew key stats')
+    parser.add_argument('--quotes', action='store_true', dest='force_quotes',
+                        help='Renew quotes')
     parser.add_argument('--financial', action='store_true', dest='force_financial',
                         help='Renew financial statement')
     parser.add_argument('--profile', action='store_true', dest='force_profile',
@@ -548,20 +543,20 @@ def process_args():
 
 
 def main():
-    global financial_dict
-
     # Retrieve or load ticker list
     ticker_list = get_ticker_list(args.country)
 
     # Load old financial data then update it
+    financial_dict = {}
+
     for metric, keys, is_forced in zip(metric_list, keys_list, force_renew_list):
         financial_dict = get_financial(ticker_list, metric, keys, is_forced)
 
     # Exclude inappropriate tickers
-    for filter in filter_list:
-        financial_dict = filter(financial_dict)
+    for f in filter_list:
+        financial_dict = f(financial_dict)
 
-    update_db(financial_dict.keys(), save_root / f"{fn_stock_rank}.db")
+    update_db(financial_dict, save_root / f"{fn_stock_rank}.db")
     rank_stocks(save_root / f"{fn_stock_rank}.db", save_root / f"{fn_stock_rank}.csv")
 
 
@@ -570,22 +565,21 @@ if __name__ == '__main__':
     save_root = Path(args.country.upper())
     save_root.mkdir(0o755, exist_ok=True)
 
-    financial_dict = {}
-    country_code = {'US': 'United States', 'TW': 'Taiwan'}
     fn_ticker_list = 'ticker_list'
     fn_financial = 'financial'
     fn_stock_rank = 'stock_rank'
+    yahoo_country = 'Taiwan'
+    country_code = {'US': 'United States', 'TW': 'Taiwan'}
 
     financial_keys = ["asOfDate", "EBIT", "TotalAssets", "TotalDebt", "LongTermDebt", "CurrentAssets", "CurrentLiabilities",
                       "GoodwillAndOtherIntangibleAssets", "NetPPE", "CashCashEquivalentsAndShortTermInvestments"]
-    key_stats_keys = ["bookValue"]
-    price_keys = ["longName", "marketCap", "currency", "regularMarketPrice"]
     profile_keys = ["sector", "country"]
-    all_keys = profile_keys + price_keys + financial_keys + key_stats_keys
+    quotes_keys = ["displayName", "currency", "marketCap", "bookValue", "regularMarketPrice"]
+    all_keys = profile_keys + quotes_keys + financial_keys
 
-    metric_list = ["financial", "profile", "price", "key_stats"]
-    keys_list = [financial_keys, profile_keys, price_keys, key_stats_keys]
-    force_renew_list = [args.force_financial, args.force_profile, args.force_price, args.force_key_stats]
+    metric_list = ["financial", "profile", "quotes"]
+    keys_list = [financial_keys, profile_keys, quotes_keys]
+    force_renew_list = [args.force_financial, args.force_profile, args.force_quotes]
     excluded_sectors = ["Financial Services", "Utilities"]
     filter_list = [remove_outdated, remove_sector, remove_small_marketcap, remove_country]
 
