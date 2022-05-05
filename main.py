@@ -12,9 +12,6 @@ import json
 import argparse
 import math
 import time
-import multiprocessing as mp
-import concurrent.futures
-from threading import Event
 from collections import deque
 from pathlib import Path
 from typing import Generator
@@ -281,46 +278,47 @@ def is_complete(input_dict: dict, keys_to_check: list, min_acquired: int) -> boo
     return check_list.count(True) >= min_acquired
 
 
-def _retrieve(chunk_id: int, tickers: list, metric: str, dict_proxy: dict, event: Event) -> int:
+def _retrieve(chunk_id: int, tickers: list, metric: str, result: dict) -> int:
+    print(f"Chunk {chunk_id + 1}: Tickers to be retrieved are: {tickers}")
     success = 0
 
-    if not event.is_set():
-        print(f"Chunk {chunk_id + 1}: Tickers to be retrieved are: {tickers}")
-        thread_start = time.time()
+    thread_start = time.time()
 
-        for t in tickers:
-            stock = Ticker(t, country=yahoo_country)
-            row_dict = dict_proxy.get(t, {k: '' for k in all_keys})
+    for t in tickers:
+        stock = Ticker(t, country=yahoo_country)
+        row_dict = result.get(t, {k: '' for k in all_keys})
 
-            if metric == 'financial':
-                data = stock.get_financial_data(financial_keys, 'q', trailing=False)
+        if metric == 'financial':
+            data = stock.get_financial_data(financial_keys, 'q', trailing=False)
 
-                if isinstance(data, pd.DataFrame):
-                    data = data.sort_values(['asOfDate'])
-                    data = data.iloc[-1:, :]              # get the latest row
-                    data.loc[:, 'asOfDate'] = data.loc[:, 'asOfDate'].astype('str')
-                    data = data.to_dict('index')          # dict like {index -> {column -> value}}
+            if isinstance(data, pd.DataFrame):
+                data = data.sort_values(['asOfDate'])
+                data = data.iloc[-1:, :]              # get the latest row
+                data.loc[:, 'asOfDate'] = data.loc[:, 'asOfDate'].astype('str')
+                data = data.to_dict('index')          # dict like {index -> {column -> value}}
 
-            elif metric == 'quotes':
-                data = stock.quotes
+        elif metric == 'quotes':
+            data = stock.quotes
 
-            elif metric == 'profile':
-                data = stock.summary_profile
+        elif metric == 'profile':
+            data = stock.summary_profile
 
-            else:
-                raise NotImplementedError
+        else:
+            raise NotImplementedError
 
-            if isinstance(data, dict) and isinstance(data.get(t), dict):
-                row_dict.update({k: v for k, v in data[t].items() if k in all_keys})
-                dict_proxy[t] = row_dict
-                success += 1
+        if isinstance(data, dict) and isinstance(data.get(t), dict):
+            data = {k: v for k, v in data[t].items() if k in all_keys}
+            [print(f"{k} -> {v}") for k, v in data.items()]
+            row_dict.update(data)
+            result[t] = row_dict
+            success += 1
 
-        thread_end = time.time()
+    thread_end = time.time()
 
-        print(f"Time elapsed for chunk {chunk_id + 1}: {thread_end - thread_start:.1f} seconds. Metric: {metric} Succeeded: {success}")
-        print()
+    print(f"Time elapsed for chunk {chunk_id + 1}: {thread_end - thread_start:.1f} seconds. Metric: {metric} Succeeded: {success}")
+    print()
 
-        time.sleep(2.5)
+    time.sleep(2.5)
 
     return success
 
@@ -358,35 +356,29 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
 
     if len(tickers_need_update) > 0:
         print(f"Retrieving financial data...")
+        n_banned = 20
+        last_n_queue = deque([], n_banned)
+        success_counter = 0
+        part_csv_path = save_root / f"{fn_financial}_part.csv"
 
-        with mp.Manager() as manager:
-            dict_proxy = manager.dict(result)
-            event = Event()    # Once it occurs, all futures stop.
+        for i, chunk in enumerate(chunker(tickers_need_update, 1)):
+            success = _retrieve(i, chunk, metric, result)
+            success_counter += success
+            last_n_queue.append(success)
+            is_banned = (last_n_queue.count(0) == n_banned)
 
-            with concurrent.futures.ThreadPoolExecutor(args.n_thread) as executor:
-                chunks = list(chunker(tickers_need_update, args.batch_size))
-                tasks = [executor.submit(_retrieve, i, chunk, metric, dict_proxy, event) for i, chunk in enumerate(chunks)]
-                n_banned = 10
-                last_n_queue = deque([], n_banned)
-                success_counter = 0
-                part_csv_path = save_root / f"{fn_financial}_part.csv"
+            if is_banned:
+                print(f"\nBanned by yahoo finance API.")
+                break
 
-                for future in concurrent.futures.as_completed(tasks):
-                    success = future.result()
-                    success_counter += success
-                    last_n_queue.append(success)
-                    is_banned = last_n_queue.count(0) == n_banned
+            print(f"Retrieved {success_counter} records.")
 
-                    if is_banned:
-                        print(f"\nBanned by yahoo finance API.")
-                        event.set()
+            if success_counter % 1 == 0:
+                print(f"Saving file in {part_csv_path}")
+                dict_to_csv(result, part_csv_path)
 
-                    if True:
-                        print(f'\nRetrieved {success_counter} records. Saving file in {part_csv_path}\n')
-                        dict_to_csv(dict(dict_proxy), part_csv_path)
-
-                part_csv_path.unlink(missing_ok=True)
-            result.update(dict(dict_proxy))
+        part_csv_path.unlink(missing_ok=True)
+        print(f"Saving file in {save_root / f'{fn_financial}.csv'}")
         dict_to_csv(result, save_root / f"{fn_financial}.csv")
 
     return result
@@ -532,10 +524,6 @@ def process_args():
     parser = argparse.ArgumentParser(description='Process refresh options')
     parser.add_argument('--country', '-c', type=str, default='US', dest='country',
                         help='Get stocks from which country')
-    parser.add_argument('--batch-size', '-b', type=int, default=1, dest='batch_size',
-                        help='Number of tickers in a batch')
-    parser.add_argument('--thread', '-t', type=int, default=1, dest='n_thread',
-                        help='Number of threads in parallel')
     parser.add_argument('--quotes', action='store_true', dest='force_quotes',
                         help='Renew quotes')
     parser.add_argument('--financial', action='store_true', dest='force_financial',
