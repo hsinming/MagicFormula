@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Generator
 from ftplib import FTP
 import sqlite3 as sq
-from functools import reduce
+from itertools import chain
 import pandas as pd
 import requests
 from yahooquery import Ticker
@@ -586,7 +586,7 @@ if __name__ == '__main__':
     force_renew_list = [args.force_profile, args.force_quotes, args.force_financial]
     excluded_sectors = ["Financial Services", "Utilities"]
     filter_list = [remove_outdated, remove_sector, remove_small_marketcap, remove_country]
-    all_keys = reduce(lambda a, b: a + b, keys_list)
+    all_keys = list(chain.from_iterable(keys_list))
 
     start = time.time()
     main()
