@@ -185,9 +185,9 @@ def update_db(financial_dict, db_path):
     cursor.execute('''CREATE TABLE IF NOT EXISTS stock_table (
     ticker text PRIMARY KEY,
     name text,
-    most_recent DATE,    
+    most_recent DATE,
     roc real NOT NULL,
-    earnings_yield real NOT NULL    
+    earnings_yield real NOT NULL
     );''')
 
     fs = FinancialStatement(financial_dict)
@@ -215,8 +215,8 @@ def rank_stocks(db_path, csv_path):
         SELECT *, roc_rank + earnings_yield_rank AS magic_rank FROM
         (
             SELECT *,  RANK ()  OVER( ORDER BY roc DESC) AS roc_rank,
-            RANK () OVER( ORDER BY earnings_yield DESC) AS earnings_yield_rank FROM stock_table      
-        ) 
+            RANK () OVER( ORDER BY earnings_yield DESC) AS earnings_yield_rank FROM stock_table
+        )
     )
     ORDER BY magic_rank ASC
     ''')
@@ -320,7 +320,7 @@ def _retrieve(chunk_id: int, tickers: list, metric: str, dict_proxy: dict, event
         print(f"Time elapsed for chunk {chunk_id + 1}: {thread_end - thread_start:.1f} seconds. Metric: {metric} Succeeded: {success}")
         print()
 
-        time.sleep(5)
+        time.sleep(2.5)
 
     return success
 
@@ -381,14 +381,14 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
                         print(f"\nBanned by yahoo finance API.")
                         event.set()
 
-                    elif (success_counter - 1) % 20 == 0:
-                        print(f'\nRetrieved {success_counter} records. Saving file in {part_csv_path}')
+                    if True:
+                        print(f'\nRetrieved {success_counter} records. Saving file in {part_csv_path}\n')
                         dict_to_csv(dict(dict_proxy), part_csv_path)
 
                 part_csv_path.unlink(missing_ok=True)
             result.update(dict(dict_proxy))
         dict_to_csv(result, save_root / f"{fn_financial}.csv")
-    
+
     return result
 
 
@@ -447,10 +447,10 @@ def download_ticker_list(country_code: str) -> list:
             ticker_list += non_nasdaq_ticker_list
 
     if country_code.upper() == 'TW':
-        """ TWSE data from: 
+        """ TWSE data from:
         https://data.gov.tw/datasets/search?p=1&size=10
         上市公司基本資料
-        上櫃股票基本資料                
+        上櫃股票基本資料
         """
         stock_csv = 'https://mopsfin.twse.com.tw/opendata/t187ap03_L.csv'
         otc_csv = 'https://mopsfin.twse.com.tw/opendata/t187ap03_O.csv'
