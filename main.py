@@ -13,7 +13,6 @@ import argparse
 import math
 import time
 from pathlib import Path
-from typing import Generator
 from ftplib import FTP
 import sqlite3 as sq
 from itertools import chain
@@ -225,13 +224,6 @@ def rank_stocks(db_path, csv_path):
         conn.close()
 
 
-def print_db(db_path):
-    conn = sq.connect(rf"{db_path}")
-    print(pd.read_sql_query("SELECT * FROM stock_table", conn))
-    if conn:
-        conn.close()
-
-
 def dict_to_csv(input_dict: dict, csv_path: Path):
     df = pd.DataFrame.from_dict(input_dict, orient='index')
     df = df.sort_index()
@@ -252,10 +244,6 @@ def transform_keys(input_dict: dict) -> dict:
         result[ticker] = new_row
 
     return result
-
-
-def chunker(seq: list, size: int) -> Generator:
-    return (seq[pos: pos+size] for pos in range(0, len(seq), size))
 
 
 def is_complete(input_dict: dict, keys_to_check: list, min_acquired: int) -> bool:
