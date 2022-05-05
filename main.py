@@ -12,7 +12,6 @@ import json
 import argparse
 import math
 import time
-from collections import deque
 from pathlib import Path
 from typing import Generator
 from ftplib import FTP
@@ -278,51 +277,6 @@ def is_complete(input_dict: dict, keys_to_check: list, min_acquired: int) -> boo
     return check_list.count(True) >= min_acquired
 
 
-def _retrieve(chunk_id: int, tickers: list, metric: str, result: dict) -> int:
-    print(f"Chunk {chunk_id + 1}: Tickers to be retrieved are: {tickers}")
-    success = 0
-
-    thread_start = time.time()
-
-    for t in tickers:
-        stock = Ticker(t, country=yahoo_country)
-        row_dict = result.get(t, {k: '' for k in all_keys})
-
-        if metric == 'financial':
-            data = stock.get_financial_data(financial_keys, 'q', trailing=False)
-
-            if isinstance(data, pd.DataFrame):
-                data = data.sort_values(['asOfDate'])
-                data = data.iloc[-1:, :]              # get the latest row
-                data.loc[:, 'asOfDate'] = data.loc[:, 'asOfDate'].astype('str')
-                data = data.to_dict('index')          # dict like {index -> {column -> value}}
-
-        elif metric == 'quotes':
-            data = stock.quotes
-
-        elif metric == 'profile':
-            data = stock.summary_profile
-
-        else:
-            raise NotImplementedError
-
-        if isinstance(data, dict) and isinstance(data.get(t), dict):
-            data = {k: v for k, v in data[t].items() if k in all_keys}
-            [print(f"{k} -> {v}") for k, v in data.items()]
-            row_dict.update(data)
-            result[t] = row_dict
-            success += 1
-
-    thread_end = time.time()
-
-    print(f"Time elapsed for chunk {chunk_id + 1}: {thread_end - thread_start:.1f} seconds. Metric: {metric} Succeeded: {success}")
-    print()
-
-    time.sleep(2.5)
-
-    return success
-
-
 def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -> dict:
     result = {}
 
@@ -335,10 +289,10 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
         new_dict = transform_keys(old_dict)
         result.update(new_dict)
 
-    tickers_need_update = []
+    tickers_to_pull = []
 
     if is_forced:
-        tickers_need_update = ticker_list
+        tickers_to_pull = ticker_list
 
     else:
 
@@ -348,38 +302,55 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
             if isinstance(row, dict):
 
                 if not is_complete(row, keys, 1):
-                    tickers_need_update.append(t)
+                    tickers_to_pull.append(t)
                     continue
 
             elif row is None:
-                tickers_need_update.append(t)
+                tickers_to_pull.append(t)
 
-    if len(tickers_need_update) > 0:
+    if len(tickers_to_pull) > 0:
         print(f"Retrieving financial data...")
-        n_banned = 20
-        last_n_queue = deque([], n_banned)
-        success_counter = 0
         part_csv_path = save_root / f"{fn_financial}_part.csv"
 
-        for i, chunk in enumerate(chunker(tickers_need_update, 1)):
-            success = _retrieve(i, chunk, metric, result)
-            success_counter += success
-            last_n_queue.append(success)
-            is_banned = (last_n_queue.count(0) == n_banned)
+        for i, t in enumerate(tickers_to_pull, start=1):
+            print(f"{metric} Batch {i}: {t}")
+            stock = Ticker(t, country=yahoo_country)
+            row_dict = result.get(t, {k: '' for k in all_keys})
 
-            if is_banned:
-                print(f"\nBanned by yahoo finance API.")
-                break
+            if metric == 'financial':
+                data = stock.get_financial_data(financial_keys, 'q', trailing=False)
 
-            print(f"Retrieved {success_counter} records.")
+                if isinstance(data, pd.DataFrame):
+                    data = data.sort_values(['asOfDate'])
+                    data = data.iloc[-1:, :]      # get the latest row
+                    data.loc[:, 'asOfDate'] = data.loc[:, 'asOfDate'].astype('str')
+                    data = data.to_dict('index')  # dict like {index -> {column -> value}}
 
-            if success_counter % 1 == 0:
+            elif metric == 'quotes':
+                data = stock.quotes
+
+            elif metric == 'profile':
+                data = stock.summary_profile
+
+            else:
+                raise NotImplementedError
+
+            if isinstance(data, dict) and isinstance(data.get(t), dict):
+                data = {k: v for k, v in data[t].items() if k in all_keys}
+                [print(f"\t{k} -> {v}") for k, v in data.items()]
+                row_dict.update(data)
+                result[t] = row_dict
+
+            if i % 20 == 0:
                 print(f"Saving file in {part_csv_path}")
                 dict_to_csv(result, part_csv_path)
 
-        part_csv_path.unlink(missing_ok=True)
+            print()
+            time.sleep(3)
+
         print(f"Saving file in {save_root / f'{fn_financial}.csv'}")
         dict_to_csv(result, save_root / f"{fn_financial}.csv")
+        part_csv_path.unlink(missing_ok=True)
 
     return result
 
