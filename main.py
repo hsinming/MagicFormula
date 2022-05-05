@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Generator
 from ftplib import FTP
 import sqlite3 as sq
+from functools import reduce
 import pandas as pd
 import requests
 from yahooquery import Ticker
@@ -241,13 +242,13 @@ def dict_to_csv(input_dict: dict, csv_path: Path):
     df.to_csv(csv_path, index_label='ticker', encoding='utf-8')
 
 
-def renew_column(input_dict: dict) -> dict:
+def transform_keys(input_dict: dict) -> dict:
     result = {}
 
-    for ticker, row in input_dict.items():
+    for ticker, old_row in input_dict.items():
         new_row = {k: math.nan for k in all_keys}
 
-        for k, v in row.items():
+        for k, v in old_row.items():
 
             if k in all_keys:
                 new_row[k] = v
@@ -261,7 +262,7 @@ def chunker(seq: list, size: int) -> Generator:
     return (seq[pos: pos+size] for pos in range(0, len(seq), size))
 
 
-def is_complete(input_dict: dict, keys_to_check: list, minimum_got: int) -> bool:
+def is_complete(input_dict: dict, keys_to_check: list, min_acquired: int) -> bool:
     check_list = []
 
     for k in keys_to_check:
@@ -277,7 +278,7 @@ def is_complete(input_dict: dict, keys_to_check: list, minimum_got: int) -> bool
         else:
             check_list.append(False)
 
-    return check_list.count(True) >= minimum_got
+    return check_list.count(True) >= min_acquired
 
 
 def _retrieve(chunk_id: int, tickers: list, metric: str, dict_proxy: dict, event: Event) -> int:
@@ -290,7 +291,6 @@ def _retrieve(chunk_id: int, tickers: list, metric: str, dict_proxy: dict, event
         for t in tickers:
             stock = Ticker(t, country=yahoo_country)
             row_dict = dict_proxy.get(t, {k: '' for k in all_keys})
-            data = {t: ''}
 
             if metric == 'financial':
                 data = stock.get_financial_data(financial_keys, 'q', trailing=False)
@@ -307,7 +307,10 @@ def _retrieve(chunk_id: int, tickers: list, metric: str, dict_proxy: dict, event
             elif metric == 'profile':
                 data = stock.summary_profile
 
-            if isinstance(data, dict) and isinstance(data[t], dict):
+            else:
+                raise NotImplementedError
+
+            if isinstance(data, dict) and isinstance(data.get(t), dict):
                 row_dict.update({k: v for k, v in data[t].items() if k in all_keys})
                 dict_proxy[t] = row_dict
                 success += 1
@@ -316,6 +319,8 @@ def _retrieve(chunk_id: int, tickers: list, metric: str, dict_proxy: dict, event
 
         print(f"Time elapsed for chunk {chunk_id + 1}: {thread_end - thread_start:.1f} seconds. Metric: {metric} Succeeded: {success}")
         print()
+
+        time.sleep(5)
 
     return success
 
@@ -329,7 +334,7 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
         df = pd.read_csv(file, index_col='ticker')
         df = df.sort_index()
         old_dict = df.to_dict('index')
-        new_dict = renew_column(old_dict)
+        new_dict = transform_keys(old_dict)
         result.update(new_dict)
 
     tickers_need_update = []
@@ -575,13 +580,13 @@ if __name__ == '__main__':
                       "GoodwillAndOtherIntangibleAssets", "NetPPE", "CashCashEquivalentsAndShortTermInvestments"]
     profile_keys = ["sector", "country"]
     quotes_keys = ["longName", "currency", "marketCap", "bookValue", "regularMarketPrice"]
-    all_keys = profile_keys + quotes_keys + financial_keys
 
-    metric_list = ["financial", "profile", "quotes"]
-    keys_list = [financial_keys, profile_keys, quotes_keys]
-    force_renew_list = [args.force_financial, args.force_profile, args.force_quotes]
+    metric_list = ["profile", "quotes", "financial"]
+    keys_list = [profile_keys, quotes_keys, financial_keys]
+    force_renew_list = [args.force_profile, args.force_quotes, args.force_financial]
     excluded_sectors = ["Financial Services", "Utilities"]
     filter_list = [remove_outdated, remove_sector, remove_small_marketcap, remove_country]
+    all_keys = reduce(lambda a, b: a + b, keys_list)
 
     start = time.time()
     main()
