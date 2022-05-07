@@ -168,7 +168,7 @@ class FinancialStatement(object):
 
 
 def insert_data(conn, ticker_info):
-    sql = ''' REPLACE INTO stock_table (ticker, name, sector, most_recent, roc, earnings_yield, book_market)
+    sql = ''' REPLACE INTO stock_table (ticker, name, sector, most_recent, roc, earnings_yield, book_market_ratio)
               VALUES(?,?,?,?,?,?,?) '''
     cur = conn.cursor()
     cur.execute(sql, ticker_info)
@@ -187,7 +187,7 @@ def update_db(financial_dict, db_path):
     most_recent DATE,
     roc real NOT NULL,
     earnings_yield real NOT NULL,
-    book_market real NOT NULL
+    book_market_ratio real
     );''')
 
     fs = FinancialStatement(financial_dict)
@@ -212,12 +212,11 @@ def rank_stocks(db_path, csv_path):
     cursor = conn.cursor()
     query = cursor.execute(f'''
     SELECT * FROM (
-        SELECT *, roc_rank + earnings_yield_rank + book_market_rank AS magic_rank FROM
+        SELECT *, roc_rank + earnings_yield_rank AS magic_rank FROM
         (
             SELECT *,  
             RANK () OVER( ORDER BY roc DESC) AS roc_rank,
-            RANK () OVER( ORDER BY earnings_yield DESC) AS earnings_yield_rank,
-            RANK () OVER( ORDER BY book_market DESC) AS book_market_rank FROM stock_table
+            RANK () OVER( ORDER BY earnings_yield DESC) AS earnings_yield_rank FROM stock_table
         )
     )
     ORDER BY magic_rank ASC
