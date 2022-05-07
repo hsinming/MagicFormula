@@ -20,6 +20,7 @@ import pandas as pd
 import requests
 from yahooquery import Ticker
 from fiscalyear import FiscalDateTime
+from currency_converter import CurrencyConverter, SINGLE_DAY_ECB_URL
 
 
 class FinancialStatement(object):
@@ -452,18 +453,23 @@ def remove_outdated(input_dict: dict) -> dict:
 
 
 def remove_small_marketcap(input_dict: dict) -> dict:
-    print(f"\nThe company with market cap < {args.min_market_cap} will be excluded.")
+    print(f"\nThe company with market cap < {args.min_market_cap:,.0f} USD will be excluded.")
+    usd_converter = CurrencyConverter(SINGLE_DAY_ECB_URL)
     result = {}
 
     for k, v in input_dict.items():
         try:
             market_cap = float(v['marketCap'])
+            currency = str(v['currency']).upper()
         except Exception:
             continue
 
-        if not math.isnan(market_cap) and market_cap >= args.min_market_cap:
-            result[k] = v
-            result[k]['marketCap'] = market_cap
+        if not math.isnan(market_cap) and currency != '':
+            market_cap_in_usd = usd_converter.convert(market_cap, currency, 'USD')
+
+            if market_cap_in_usd >= args.min_market_cap:
+                result[k] = v
+                result[k]['marketCap'] = market_cap
 
     return result
 
@@ -483,14 +489,15 @@ def process_args():
     parser = argparse.ArgumentParser(description='Process refresh options')
     parser.add_argument('--country', '-c', type=str, default='US', dest='country',
                         help='Get stocks from which country')
+    parser.add_argument('--min-market-cap', '-m', type=int, default=1e9, dest='min_market_cap',
+                        help='Minimal market cap in USD')
     parser.add_argument('--quotes', action='store_true', dest='force_quotes',
                         help='Renew quotes')
     parser.add_argument('--financial', action='store_true', dest='force_financial',
                         help='Renew financial statement')
     parser.add_argument('--profile', action='store_true', dest='force_profile',
                         help='Renew summary profile')
-    parser.add_argument('--min-market-cap', '-m', type=int, default=1e8, dest='min_market_cap',
-                        help='Minimal market cap')
+
     return parser.parse_args()
 
 

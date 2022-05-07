@@ -22,9 +22,7 @@ python main.py
 There are three flags to be aware of:
 
 * `-c`    Country. ['US', 'TW'], default='US'
-* `-t`    Thread number, default=1
-* `-b`    Batch size, default=1
-* `-m`    Minimal market cap, default=100,000,000
+* `-m`    Minimal market cap in USD, default=1000,000,000 USD
 * `--quotes`    forcefully renew quotes
 * `--profile`    forcefully renew summary profile
 * `--financial`    forcefully renew financial statements
