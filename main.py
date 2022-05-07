@@ -463,7 +463,8 @@ def remove_outdated(input_dict: dict) -> dict:
 
 def remove_small_marketcap(input_dict: dict) -> dict:
     print(f"\nThe company with market cap < {args.min_market_cap:,.0f} USD will be excluded.")
-    converter = CurrencyConverter(SINGLE_DAY_ECB_URL)
+    usd_converter = CurrencyConverter(SINGLE_DAY_ECB_URL)
+    twd_converter = float(twder.now('USD')[1])
     result = {}
 
     for k, v in input_dict.items():
@@ -478,10 +479,10 @@ def remove_small_marketcap(input_dict: dict) -> dict:
         if not math.isnan(market_cap):
 
             if currency == 'TWD':
-                market_cap = market_cap / float(twder.now('USD')[1])
+                market_cap = market_cap / twd_converter
 
             else:
-                market_cap = converter.convert(market_cap, currency, 'USD')    # TWD not included.
+                market_cap = usd_converter.convert(market_cap, currency, 'USD')    # TWD not included.
 
             if market_cap >= args.min_market_cap:
                 result[k] = v
