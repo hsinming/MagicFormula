@@ -12,6 +12,7 @@ import json
 import argparse
 import math
 import time
+from datetime import datetime, timedelta
 from pathlib import Path
 from ftplib import FTP
 import sqlite3 as sq
@@ -19,7 +20,7 @@ from itertools import chain
 import pandas as pd
 import requests
 from yahooquery import Ticker
-from fiscalyear import FiscalDateTime
+from fiscalyear import FiscalDate
 from currency_converter import CurrencyConverter, SINGLE_DAY_ECB_URL
 
 
@@ -446,9 +447,9 @@ def get_ticker_list(country_code: str) -> list:
 
 
 def remove_outdated(input_dict: dict) -> dict:
-    target_date = FiscalDateTime.today().prev_fiscal_quarter.prev_fiscal_quarter.end.strftime('%Y-%m-%d')
-    print(f'\nThe end date of the last second fiscal quarter is {target_date}')
-    print(f'\nThe financial statement date earlier than {target_date} will be excluded.')
+    tmp_date = datetime.today() - timedelta(days=45)
+    target_date = FiscalDate(tmp_date.year, tmp_date.month, tmp_date.day).prev_fiscal_quarter.end.strftime('%Y-%m-%d')
+    print(f'The financial statement date earlier than {target_date} will be excluded.')
 
     output_dict = {}
 
