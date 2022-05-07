@@ -186,7 +186,7 @@ def update_db(financial_dict, db_path):
     sector text,
     most_recent DATE,
     roc real NOT NULL,
-    earnings_yield real NOT NULL
+    earnings_yield real NOT NULL,
     book_market real NOT NULL
     );''')
 
