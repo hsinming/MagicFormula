@@ -388,21 +388,22 @@ def download_ticker_list(country_code: str) -> list:
 
         if Path(nasdaq_list).is_file():
             nasdaq_df = pd.read_csv(nasdaq_list, sep='|')
-            nasdaq_df = nasdaq_df[(nasdaq_df['ETF'] == 'N') & (nasdaq_df['Test Issue'] == 'N') & (nasdaq_df['Financial Status'] == 'N')]
+            nasdaq_df = nasdaq_df[(nasdaq_df['Market Category'].isin(['Q', 'G'])) & (nasdaq_df['Test Issue'] == 'N') & (nasdaq_df['Financial Status'] == 'N') & (nasdaq_df['ETF'] == 'N')]
             nasdaq_ticker_list = nasdaq_df['Symbol'].to_list()
             ticker_list += nasdaq_ticker_list
 
         if Path(non_nasdaq_list).is_file():
             non_nasdaq_df = pd.read_csv(non_nasdaq_list, sep='|')
-            non_nasdaq_df = non_nasdaq_df[(non_nasdaq_df['ETF'] == 'N') & (non_nasdaq_df['Test Issue'] == 'N')]
+            non_nasdaq_df = non_nasdaq_df[(non_nasdaq_df['Exchange'] == 'N') & (non_nasdaq_df['ETF'] == 'N') & (non_nasdaq_df['Test Issue'] == 'N')]
             non_nasdaq_ticker_list = non_nasdaq_df['ACT Symbol'].to_list()
             ticker_list += non_nasdaq_ticker_list
+
+        ticker_list = [t for t in ticker_list if all(s not in t for s in ['$', '.'])]
 
     if country_code.upper() == 'TW':
         """ TWSE data from:
         https://data.gov.tw/datasets/search?p=1&size=10
-        上市公司基本資料
-        上櫃股票基本資料
+        key words = ["上市公司基本資料", "上櫃股票基本資料"]
         """
         stock_csv = 'https://mopsfin.twse.com.tw/opendata/t187ap03_L.csv'
         otc_csv = 'https://mopsfin.twse.com.tw/opendata/t187ap03_O.csv'
@@ -413,8 +414,6 @@ def download_ticker_list(country_code: str) -> list:
             df = download_csv_to_df(url)
             series = df['公司代號']
             ticker_list += [f'{ticker}{suffix}' for ticker in series.to_list()]
-
-    ticker_list = [t for t in ticker_list if "$" not in t]
 
     return ticker_list
 
