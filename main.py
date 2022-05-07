@@ -388,17 +388,27 @@ def download_ticker_list(country_code: str) -> list:
 
         if Path(nasdaq_list).is_file():
             nasdaq_df = pd.read_csv(nasdaq_list, sep='|')
-            nasdaq_df = nasdaq_df[(nasdaq_df['Market Category'].isin(['Q', 'G'])) & (nasdaq_df['Test Issue'] == 'N') & (nasdaq_df['Financial Status'] == 'N') & (nasdaq_df['ETF'] == 'N')]
+            mask1 = (nasdaq_df['Market Category'].isin(['Q', 'G']))  # Q=NASDAQ Global Select, G=NASDAQ Global
+            mask2 = (nasdaq_df['Test Issue'] == 'N')
+            mask3 = (nasdaq_df['Financial Status'] == 'N')
+            mask4 = (nasdaq_df['ETF'] == 'N')
+            mask5 = (nasdaq_df['Security Name'].str.contains('Unit|Warrant|Right|Preferred|Convertible', case=True) == False)
+            nasdaq_df = nasdaq_df[mask1 & mask2 & mask3 & mask4 & mask5]
             nasdaq_ticker_list = nasdaq_df['Symbol'].to_list()
             ticker_list += nasdaq_ticker_list
 
         if Path(non_nasdaq_list).is_file():
             non_nasdaq_df = pd.read_csv(non_nasdaq_list, sep='|')
-            non_nasdaq_df = non_nasdaq_df[(non_nasdaq_df['Exchange'] == 'N') & (non_nasdaq_df['ETF'] == 'N') & (non_nasdaq_df['Test Issue'] == 'N')]
+            mask6 = (non_nasdaq_df['Exchange'] == 'N')    #N=NYSE
+            mask7 = (non_nasdaq_df['ETF'] == 'N')
+            mask8 = (non_nasdaq_df['Test Issue'] == 'N')
+            mask9 = (non_nasdaq_df['Security Name'].str.contains('Unit|Warrant|Right|Preferred|Convertible', case=True) == False)
+            mask10 = (non_nasdaq_df['ACT Symbol'].str.contains('$|.U|.W|.R|.D|.Z|.V', case=True, regex=False) == False)
+            non_nasdaq_df = non_nasdaq_df[mask6 & mask7 & mask8 & mask9 & mask10]
             non_nasdaq_ticker_list = non_nasdaq_df['ACT Symbol'].to_list()
             ticker_list += non_nasdaq_ticker_list
 
-        ticker_list = [t for t in ticker_list if all(s not in t for s in ['$', '.'])]
+        ticker_list = [t for t in ticker_list if all(s not in t for s in ['$', '.W', '.U', '.R'])]
 
     if country_code.upper() == 'TW':
         """ TWSE data from:
