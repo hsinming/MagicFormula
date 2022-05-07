@@ -21,6 +21,7 @@ import pandas as pd
 import requests
 from yahooquery import Ticker
 from fiscalyear import FiscalDate
+import twder
 from currency_converter import CurrencyConverter, SINGLE_DAY_ECB_URL
 
 
@@ -449,7 +450,7 @@ def get_ticker_list(country_code: str) -> list:
 def remove_outdated(input_dict: dict) -> dict:
     tmp_date = datetime.today() - timedelta(days=45)
     target_date = FiscalDate(tmp_date.year, tmp_date.month, tmp_date.day).prev_fiscal_quarter.end.strftime('%Y-%m-%d')
-    print(f'The financial statement date earlier than {target_date} will be excluded.')
+    print(f'\nThe financial statement date earlier than {target_date} will be excluded.')
 
     output_dict = {}
 
@@ -462,20 +463,27 @@ def remove_outdated(input_dict: dict) -> dict:
 
 def remove_small_marketcap(input_dict: dict) -> dict:
     print(f"\nThe company with market cap < {args.min_market_cap:,.0f} USD will be excluded.")
-    usd_converter = CurrencyConverter(SINGLE_DAY_ECB_URL)
+    converter = CurrencyConverter(SINGLE_DAY_ECB_URL)
     result = {}
 
     for k, v in input_dict.items():
+
         try:
             market_cap = float(v['marketCap'])
             currency = str(v['currency']).upper()
+
         except Exception:
             continue
 
-        if not math.isnan(market_cap) and currency != '':
-            market_cap_in_usd = usd_converter.convert(market_cap, currency, 'USD')
+        if not math.isnan(market_cap):
 
-            if market_cap_in_usd >= args.min_market_cap:
+            if currency == 'TWD':
+                market_cap = market_cap / twder.now('USD')[1]
+
+            else:
+                market_cap = converter.convert(market_cap, currency, 'USD')    # TWD not included.
+
+            if market_cap >= args.min_market_cap:
                 result[k] = v
                 result[k]['marketCap'] = market_cap
 
@@ -546,7 +554,7 @@ if __name__ == '__main__':
     metric_list = ["profile", "quotes", "financial"]
     keys_list = [profile_keys, quotes_keys, financial_keys]
     force_renew_list = [args.force_profile, args.force_quotes, args.force_financial]
-    excluded_sectors = ["Financial Services", "Utilities"]
+    excluded_sectors = ["Financial Services", "Financial", "Real Estate", "Utilities"]
     filter_list = [remove_outdated, remove_sector, remove_small_marketcap, remove_country]
     all_keys = list(chain.from_iterable(keys_list))
 
