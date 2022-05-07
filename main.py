@@ -168,8 +168,8 @@ class FinancialStatement(object):
 
 
 def insert_data(conn, ticker_info):
-    sql = ''' REPLACE INTO stock_table (ticker, name, most_recent, roc, earnings_yield)
-              VALUES(?,?,?,?,?) '''
+    sql = ''' REPLACE INTO stock_table (ticker, name, sector, most_recent, roc, earnings_yield, book_market)
+              VALUES(?,?,?,?,?,?,?) '''
     cur = conn.cursor()
     cur.execute(sql, ticker_info)
     conn.commit()
@@ -183,9 +183,11 @@ def update_db(financial_dict, db_path):
     cursor.execute('''CREATE TABLE IF NOT EXISTS stock_table (
     ticker text PRIMARY KEY,
     name text,
+    sector text,
     most_recent DATE,
     roc real NOT NULL,
     earnings_yield real NOT NULL
+    book_market real NOT NULL
     );''')
 
     fs = FinancialStatement(financial_dict)
@@ -194,7 +196,7 @@ def update_db(financial_dict, db_path):
 
         try:
             fs.set_ticker(ticker)
-            data = (ticker, fs.name, fs.financial_date, fs.roc, fs.earnings_yield)
+            data = (ticker, fs.name, fs.sector, fs.financial_date, fs.roc, fs.earnings_yield, fs.book_market_ratio)
             insert_data(conn, data)
 
         except Exception as e:
@@ -210,10 +212,12 @@ def rank_stocks(db_path, csv_path):
     cursor = conn.cursor()
     query = cursor.execute(f'''
     SELECT * FROM (
-        SELECT *, roc_rank + earnings_yield_rank AS magic_rank FROM
+        SELECT *, roc_rank + earnings_yield_rank + book_market_rank AS magic_rank FROM
         (
-            SELECT *,  RANK ()  OVER( ORDER BY roc DESC) AS roc_rank,
-            RANK () OVER( ORDER BY earnings_yield DESC) AS earnings_yield_rank FROM stock_table
+            SELECT *,  
+            RANK () OVER( ORDER BY roc DESC) AS roc_rank,
+            RANK () OVER( ORDER BY earnings_yield DESC) AS earnings_yield_rank,
+            RANK () OVER( ORDER BY book_market DESC) AS book_market_rank FROM stock_table
         )
     )
     ORDER BY magic_rank ASC
