@@ -478,7 +478,7 @@ def remove_small_marketcap(input_dict: dict) -> dict:
         if not math.isnan(market_cap):
 
             if currency == 'TWD':
-                market_cap = market_cap / twder.now('USD')[1]
+                market_cap = market_cap / float(twder.now('USD')[1])
 
             else:
                 market_cap = converter.convert(market_cap, currency, 'USD')    # TWD not included.
