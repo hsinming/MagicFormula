@@ -118,7 +118,7 @@ class FinancialStatement(object):
         """ https://www.valuesignals.com/Glossary/Details/Net_Working_Capital?securityId=13381
         """
         return max(0, (self.current_assets - self.excess_cash - (
-                    self.current_liabilities - (self.total_debt - self.longterm_debt))))
+                self.current_liabilities - (self.total_debt - self.longterm_debt))))
 
     @property
     def market_cap(self):
@@ -236,7 +236,7 @@ def dict_to_csv(input_dict: dict, csv_path: Path):
     df.to_csv(csv_path, index_label='ticker', encoding='utf-8')
 
 
-def transform_keys(input_dict: dict) -> dict:
+def change_to_new_keys(input_dict: dict) -> dict:
     result = {}
 
     for ticker, old_row in input_dict.items():
@@ -273,7 +273,6 @@ def is_complete(input_dict: dict, keys_to_check: list, min_required: int) -> boo
 
 def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -> dict:
     result = {}
-    loaded_from_csv = {}
     tickers_to_pull = []
 
     # Loading order is important: load part csv in the last because it is usually newer.
@@ -282,8 +281,11 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
         df = pd.read_csv(file, index_col='ticker')
         df = df.sort_index()
         old_dict = df.to_dict('index')
-        new_dict = transform_keys(old_dict)
-        loaded_from_csv.update(new_dict)
+        new_dict = change_to_new_keys(old_dict)
+        result.update(new_dict)
+
+    # keep only those tickers in ticker_list
+    result = {k: v for k, v in result.items() if k in ticker_list}
 
     if is_forced:
         tickers_to_pull = ticker_list
@@ -292,7 +294,7 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
 
         for t in ticker_list:
 
-            if t not in loaded_from_csv.keys() or not is_complete(loaded_from_csv[t], keys, 1):
+            if t not in result.keys() or not is_complete(result[t], keys, 1):
                 tickers_to_pull.append(t)
 
     if len(tickers_to_pull) > 0:
@@ -300,55 +302,44 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
         pulled_counter = 0
         part_csv_path = save_root / f"{fn_financial}_part.csv"
 
-        for t in ticker_list:
+        for t in tickers_to_pull:
+            print(f"Pulling {t} {metric}...")
+            stock = Ticker(t, country=yahoo_country)
+            row_dict = result.get(t, {k: math.nan for k in all_keys})
 
-            if t in tickers_to_pull:
-                print(f"Pulling {t} {metric}...")
+            if metric == 'financial':
+                data = stock.get_financial_data(financial_keys, 'q', trailing=False)
 
-                stock = Ticker(t, country=yahoo_country)
-                row_dict = loaded_from_csv.get(t, {k: math.nan for k in all_keys})
+                if isinstance(data, pd.DataFrame):
+                    data = data.sort_values(['asOfDate'])
+                    data = data.iloc[-1:, :]  # get the latest row
+                    data.loc[:, 'asOfDate'] = data.loc[:, 'asOfDate'].astype('str')
+                    data = data.to_dict('index')  # a nested dict like {index -> {column -> value}}
 
-                if metric == 'financial':
-                    data = stock.get_financial_data(financial_keys, 'q', trailing=False)
+            elif metric == 'quotes':
+                data = stock.quotes
 
-                    if isinstance(data, pd.DataFrame):
-                        data = data.sort_values(['asOfDate'])
-                        data = data.iloc[-1:, :]      # get the latest row
-                        data.loc[:, 'asOfDate'] = data.loc[:, 'asOfDate'].astype('str')
-                        data = data.to_dict('index')  # dict like {index -> {column -> value}}
-
-                elif metric == 'quotes':
-                    data = stock.quotes
-
-                elif metric == 'profile':
-                    data = stock.summary_profile
-
-                else:
-                    raise NotImplementedError
-
-                if isinstance(data, dict) and isinstance(data.get(t), dict):
-                    data = {k: v for k, v in data[t].items() if k in all_keys}
-                    [print(f"\t{k} -> {v}") for k, v in data.items()]
-                    row_dict.update(data)
-                    result[t] = row_dict
-                    pulled_counter += 1
-
-                if (pulled_counter + 1) % 20 == 0:
-                    print(f"Saving file in {part_csv_path}")
-                    dict_to_csv(result, part_csv_path)
-
-                print()
-                time.sleep(3)
+            elif metric == 'profile':
+                data = stock.summary_profile
 
             else:
-                # print(f"Loading {t} {metric}...")
-                # [print(f"\t{k} -> {v}") for k, v in loaded_from_csv[t].items()]
-                result[t] = loaded_from_csv[t]
+                raise NotImplementedError
+
+            if isinstance(data, dict) and isinstance(data.get(t), dict):
+                data = {k: v for k, v in data[t].items() if k in all_keys}
+                [print(f"\t{k} -> {v}") for k, v in data.items()]
+                row_dict.update(data)
+                result[t] = row_dict
+                pulled_counter += 1
+
+            if (pulled_counter + 1) % 20 == 0:
+                print(f"Saving file in {part_csv_path}")
+                dict_to_csv(result, part_csv_path)
+
+            print()
+            time.sleep(3)
 
         part_csv_path.unlink(missing_ok=True)
-
-    else:
-        result = loaded_from_csv
 
     print(f"Saving file in {save_root / f'{fn_financial}.csv'}")
     dict_to_csv(result, save_root / f"{fn_financial}.csv")
@@ -392,7 +383,6 @@ def download_ticker_list(country_code: str) -> list:
             ftp_server.cwd('symboldirectory')
 
             for file in [nasdaq_list, non_nasdaq_list]:
-
                 with open(file, 'wb') as fp:
                     ftp_server.retrbinary(f"RETR {file}", fp.write)
 
@@ -411,7 +401,7 @@ def download_ticker_list(country_code: str) -> list:
 
         if Path(non_nasdaq_list).is_file():
             non_nasdaq_df = pd.read_csv(non_nasdaq_list, sep='|')
-            mask6 = (non_nasdaq_df['Exchange'] == 'N')    #N=NYSE
+            mask6 = (non_nasdaq_df['Exchange'] == 'N')  # N=NYSE
             mask7 = (non_nasdaq_df['ETF'] == 'N')
             mask8 = (non_nasdaq_df['Test Issue'] == 'N')
             mask9 = ~(non_nasdaq_df['Security Name'].str.contains('Unit|Warrant|Right|Preferred|Convertible', case=True, na=False))
@@ -492,7 +482,7 @@ def remove_small_marketcap(input_dict: dict) -> dict:
                 market_cap_in_usd = market_cap / twd_converter
 
             else:
-                market_cap_in_usd = usd_converter.convert(market_cap, currency, 'USD')    # TWD not included.
+                market_cap_in_usd = usd_converter.convert(market_cap, currency, 'USD')  # TWD not included.
 
             if market_cap_in_usd >= args.min_market_cap:
                 result[k] = v
@@ -557,7 +547,8 @@ if __name__ == '__main__':
     yahoo_country = 'Taiwan'
     country_code = {'US': 'United States', 'TW': 'Taiwan'}
 
-    financial_keys = ["asOfDate", "EBIT", "TotalAssets", "TotalDebt", "LongTermDebt", "CurrentAssets", "CurrentLiabilities",
+    financial_keys = ["asOfDate", "EBIT", "TotalAssets", "TotalDebt", "LongTermDebt", "CurrentAssets",
+                      "CurrentLiabilities",
                       "GoodwillAndOtherIntangibleAssets", "NetPPE", "CashCashEquivalentsAndShortTermInvestments"]
     profile_keys = ["sector", "country"]
     quotes_keys = ["longName", "currency", "marketCap", "bookValue", "regularMarketPrice"]
