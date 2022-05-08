@@ -252,7 +252,7 @@ def transform_keys(input_dict: dict) -> dict:
     return result
 
 
-def is_complete(input_dict: dict, keys_to_check: list, min_acquired: int) -> bool:
+def is_complete(input_dict: dict, keys_to_check: list, min_required: int) -> bool:
     check_list = []
 
     for k in keys_to_check:
@@ -268,11 +268,13 @@ def is_complete(input_dict: dict, keys_to_check: list, min_acquired: int) -> boo
         else:
             check_list.append(False)
 
-    return check_list.count(True) >= min_acquired
+    return check_list.count(True) >= min_required
 
 
 def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -> dict:
     result = {}
+    loaded_from_csv = {}
+    tickers_to_pull = []
 
     # Loading order is important: load part csv in the last because it is usually newer.
     for file in sorted(save_root.glob(f'{fn_financial}*.csv')):
@@ -281,9 +283,7 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
         df = df.sort_index()
         old_dict = df.to_dict('index')
         new_dict = transform_keys(old_dict)
-        result.update(new_dict)
-
-    tickers_to_pull = []
+        loaded_from_csv.update(new_dict)
 
     if is_forced:
         tickers_to_pull = ticker_list
@@ -291,60 +291,67 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
     else:
 
         for t in ticker_list:
-            row = result.get(t)
 
-            if isinstance(row, dict):
-
-                if not is_complete(row, keys, 1):
-                    tickers_to_pull.append(t)
-                    continue
-
-            elif row is None:
+            if t not in loaded_from_csv.keys() or not is_complete(loaded_from_csv[t], keys, 1):
                 tickers_to_pull.append(t)
 
     if len(tickers_to_pull) > 0:
-        print(f"Retrieving financial data...")
+        print(f"Pulling {len(tickers_to_pull)} tickers {metric}...")
+        pulled_counter = 0
         part_csv_path = save_root / f"{fn_financial}_part.csv"
 
-        for i, t in enumerate(tickers_to_pull, start=1):
-            print(f"{metric} Batch {i}: {t}")
-            stock = Ticker(t, country=yahoo_country)
-            row_dict = result.get(t, {k: '' for k in all_keys})
+        for t in ticker_list:
 
-            if metric == 'financial':
-                data = stock.get_financial_data(financial_keys, 'q', trailing=False)
+            if t in tickers_to_pull:
+                print(f"Pulling {t} {metric}...")
 
-                if isinstance(data, pd.DataFrame):
-                    data = data.sort_values(['asOfDate'])
-                    data = data.iloc[-1:, :]      # get the latest row
-                    data.loc[:, 'asOfDate'] = data.loc[:, 'asOfDate'].astype('str')
-                    data = data.to_dict('index')  # dict like {index -> {column -> value}}
+                stock = Ticker(t, country=yahoo_country)
+                row_dict = loaded_from_csv.get(t, {k: math.nan for k in all_keys})
 
-            elif metric == 'quotes':
-                data = stock.quotes
+                if metric == 'financial':
+                    data = stock.get_financial_data(financial_keys, 'q', trailing=False)
 
-            elif metric == 'profile':
-                data = stock.summary_profile
+                    if isinstance(data, pd.DataFrame):
+                        data = data.sort_values(['asOfDate'])
+                        data = data.iloc[-1:, :]      # get the latest row
+                        data.loc[:, 'asOfDate'] = data.loc[:, 'asOfDate'].astype('str')
+                        data = data.to_dict('index')  # dict like {index -> {column -> value}}
+
+                elif metric == 'quotes':
+                    data = stock.quotes
+
+                elif metric == 'profile':
+                    data = stock.summary_profile
+
+                else:
+                    raise NotImplementedError
+
+                if isinstance(data, dict) and isinstance(data.get(t), dict):
+                    data = {k: v for k, v in data[t].items() if k in all_keys}
+                    [print(f"\t{k} -> {v}") for k, v in data.items()]
+                    row_dict.update(data)
+                    result[t] = row_dict
+                    pulled_counter += 1
+
+                if (pulled_counter + 1) % 20 == 0:
+                    print(f"Saving file in {part_csv_path}")
+                    dict_to_csv(result, part_csv_path)
+
+                print()
+                time.sleep(3)
 
             else:
-                raise NotImplementedError
+                # print(f"Loading {t} {metric}...")
+                # [print(f"\t{k} -> {v}") for k, v in loaded_from_csv[t].items()]
+                result[t] = loaded_from_csv[t]
 
-            if isinstance(data, dict) and isinstance(data.get(t), dict):
-                data = {k: v for k, v in data[t].items() if k in all_keys}
-                [print(f"\t{k} -> {v}") for k, v in data.items()]
-                row_dict.update(data)
-                result[t] = row_dict
-
-            if i % 20 == 0:
-                print(f"Saving file in {part_csv_path}")
-                dict_to_csv(result, part_csv_path)
-
-            print()
-            time.sleep(3)
-
-        print(f"Saving file in {save_root / f'{fn_financial}.csv'}")
-        dict_to_csv(result, save_root / f"{fn_financial}.csv")
         part_csv_path.unlink(missing_ok=True)
+
+    else:
+        result = loaded_from_csv
+
+    print(f"Saving file in {save_root / f'{fn_financial}.csv'}")
+    dict_to_csv(result, save_root / f"{fn_financial}.csv")
 
     return result
 
@@ -457,9 +464,9 @@ def remove_outdated(input_dict: dict) -> dict:
 
     output_dict = {}
 
-    for ticker, row in input_dict.items():
-        if isinstance(row['asOfDate'], str) and row['asOfDate'] >= target_date:
-            output_dict[ticker] = row
+    for k, v in input_dict.items():
+        if isinstance(v['asOfDate'], str) and v['asOfDate'] >= target_date:
+            output_dict[k] = v
 
     return output_dict
 
@@ -482,12 +489,12 @@ def remove_small_marketcap(input_dict: dict) -> dict:
         if not math.isnan(market_cap):
 
             if currency == 'TWD':
-                market_cap = market_cap / twd_converter
+                market_cap_in_usd = market_cap / twd_converter
 
             else:
-                market_cap = usd_converter.convert(market_cap, currency, 'USD')    # TWD not included.
+                market_cap_in_usd = usd_converter.convert(market_cap, currency, 'USD')    # TWD not included.
 
-            if market_cap >= args.min_market_cap:
+            if market_cap_in_usd >= args.min_market_cap:
                 result[k] = v
                 result[k]['marketCap'] = market_cap
 
