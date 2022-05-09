@@ -63,17 +63,9 @@ class FinancialStatement(object):
 
     @property
     def longterm_debt(self):
-        result = self.sheet[self.ticker]["LongTermDebt"]
+        result = self.sheet[self.ticker]['LongTermDebtAndCapitalLeaseObligation']
         if math.isnan(result):
             print(f"Missing longterm debt for {self.ticker}")
-            result = 0
-        return result
-
-    @property
-    def intangible_assets(self):
-        result = self.sheet[self.ticker]["GoodwillAndOtherIntangibleAssets"]
-        if math.isnan(result):
-            print(f"Missing intangible assets for {self.ticker}")
             result = 0
         return result
 
@@ -547,9 +539,8 @@ if __name__ == '__main__':
     yahoo_country = 'Taiwan'
     country_code = {'US': 'United States', 'TW': 'Taiwan'}
 
-    financial_keys = ["asOfDate", "EBIT", "TotalAssets", "TotalDebt", "LongTermDebt", "CurrentAssets",
-                      "CurrentLiabilities",
-                      "GoodwillAndOtherIntangibleAssets", "NetPPE", "CashCashEquivalentsAndShortTermInvestments"]
+    financial_keys = ["asOfDate", "EBIT", "TotalAssets", "TotalDebt", 'LongTermDebtAndCapitalLeaseObligation',
+                      "CurrentAssets", "CurrentLiabilities", "NetPPE", "CashCashEquivalentsAndShortTermInvestments"]
     profile_keys = ["sector", "country"]
     quotes_keys = ["longName", "currency", "marketCap", "bookValue", "regularMarketPrice"]
 
