@@ -393,7 +393,7 @@ def download_ticker_list(country_code: str) -> list:
 
         if Path(non_nasdaq_list).is_file():
             non_nasdaq_df = pd.read_csv(non_nasdaq_list, sep='|')
-            mask6 = (non_nasdaq_df['Exchange'] == 'N')  # N=NYSE
+            mask6 = (non_nasdaq_df['Exchange'].isin(['N', 'A']))  # N=NYSE  A=NYSE MKT(AMEX)
             mask7 = (non_nasdaq_df['ETF'] == 'N')
             mask8 = (non_nasdaq_df['Test Issue'] == 'N')
             mask9 = ~(non_nasdaq_df['Security Name'].str.contains('Unit|Warrant|Right|Preferred|Convertible', case=True, na=False))
@@ -547,7 +547,7 @@ if __name__ == '__main__':
     metric_list = ["profile", "quotes", "financial"]
     keys_list = [profile_keys, quotes_keys, financial_keys]
     force_renew_list = [args.force_profile, args.force_quotes, args.force_financial]
-    excluded_sectors = ["Financial Services", "Financial", "Real Estate", "Utilities"]
+    excluded_sectors = ["Financial Services", "Financial", "Utilities"]
     filter_list = [remove_outdated, remove_sector, remove_small_marketcap, remove_country]
     all_keys = list(chain.from_iterable(keys_list))
 
