@@ -536,8 +536,8 @@ if __name__ == '__main__':
     fn_ticker_list = 'ticker_list'
     fn_financial = 'financial'
     fn_stock_rank = 'stock_rank'
-    yahoo_country = 'Taiwan'
     country_code = {'US': 'United States', 'TW': 'Taiwan'}
+    yahoo_country = country_code[args.country.upper()]
 
     financial_keys = ["asOfDate", "EBIT", "TotalAssets", "TotalDebt", 'LongTermDebtAndCapitalLeaseObligation',
                       "CurrentAssets", "CurrentLiabilities", "NetPPE", "CashCashEquivalentsAndShortTermInvestments"]
