@@ -82,6 +82,7 @@ class FinancialStatement(object):
         """ There are many definitions of excess cash.
         definition 1 : https://www.valupaedia.com/index.php/business-dictionary/552-excess-cash
         excess_cash = self.total_cash - max(0, self.current_liabilities - (self.current_assets - self.total_cash))
+
         definition 2: https://www.quant-investing.com/glossary/excess-cash
         excess_cash = min(self.total_cash, max(self.current_assets - 2.0 * self.current_liabilities, 0))
         """
@@ -100,6 +101,7 @@ class FinancialStatement(object):
         """
         definition 1: https://www.valuesignals.com/Glossary/Details/Net_Fixed_Assets/13381
         Net fixed assets = net PPE
+
         definition 2: https://www.quant-investing.com/glossary/net-fixed-assets
         Net Fixed Assets = Total Assets - Total Current Assets - Total Intangible assets
         """
