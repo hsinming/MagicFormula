@@ -43,7 +43,11 @@ class FinancialStatement(object):
 
     @property
     def total_debt(self):
-        return self.sheet[self.ticker]["TotalDebt"]
+        result = self.sheet[self.ticker]["TotalDebt"]
+        if math.isnan(result):
+            print(f"Missing total debt for {self.ticker}")
+            result = 0
+        return result
 
     @property
     def current_assets(self):
@@ -123,6 +127,7 @@ class FinancialStatement(object):
         """
         definition 1: https://www.quant-investing.com/glossary/enterprise-value
         EV = market cap + long-term debt + minority interest + preferred stock - excess cash
+
         definition 2: https://www.valuesignals.com/Glossary/Details/Enterprise_Value/13381
         EV = market cap + total debt + minority interest + preferred stock - total cash
         """
