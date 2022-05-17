@@ -305,13 +305,19 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
             row_dict = result.get(t, {k: math.nan for k in all_keys})
 
             if metric == 'financial':
-                data = stock.get_financial_data(financial_keys, 'q', trailing=False)
+                mixed_data = stock.get_financial_data(keys, 'q', trailing=True)
 
-                if isinstance(data, pd.DataFrame):
-                    data = data.sort_values(['asOfDate'])
-                    data = data.iloc[-1:, :]  # get the latest row
-                    data.loc[:, 'asOfDate'] = data.loc[:, 'asOfDate'].astype('str')
-                    data = data.to_dict('index')  # a nested dict like {index -> {column -> value}}
+                if isinstance(mixed_data, pd.DataFrame):
+                    ttm_df = mixed_data.loc[mixed_data['periodType'] == 'TTM']
+                    quarterly_df = mixed_data.loc[mixed_data['periodType'] == '3M']
+                    quarterly_df = quarterly_df.sort_values(['asOfDate'])
+                    result_df = quarterly_df.iloc[-1:, :]    # get the latest row
+                    result_df = result_df.astype({'asOfDate': 'str'})
+                    result_df.at[t, 'EBIT'] = ttm_df.at[t, 'EBIT']
+                    data = result_df.to_dict('index')        # a nested dict like {index -> {column -> value}}
+
+                else:
+                    data = None
 
             elif metric == 'quotes':
                 data = stock.quotes
