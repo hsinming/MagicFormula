@@ -315,7 +315,7 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
                     quarterly_df = quarterly_df.sort_values(['asOfDate'])
                     result_df = quarterly_df.iloc[-1:, :]    # get the latest row
                     result_df = result_df.astype({'asOfDate': 'str'})
-                    result_df['EBIT'].iloc[0] = ttm_df['EBIT'].iloc[0]
+                    result_df.iat[0, result_df.columns.get_loc('EBIT')] = ttm_df.iat[0, ttm_df.columns.get_loc('EBIT')]
                     data = result_df.to_dict('index')        # a nested dict like {index -> {column -> value}}
 
                 else:
