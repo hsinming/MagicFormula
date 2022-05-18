@@ -383,6 +383,7 @@ def download_ticker_list(country_code: str) -> list:
             ftp_server.cwd('symboldirectory')
 
             for file in [nasdaq_list, non_nasdaq_list]:
+
                 with open(file, 'wb') as fp:
                     ftp_server.retrbinary(f"RETR {file}", fp.write)
 
@@ -433,6 +434,7 @@ def get_ticker_list(country_code: str) -> list:
 
     if ticker_list_path.is_file():
         print("Loading ticker list...")
+
         with ticker_list_path.open('rt') as fp:
             ticker_list = json.load(fp)
 
