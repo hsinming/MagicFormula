@@ -308,12 +308,14 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
                 mixed_data = stock.get_financial_data(keys, 'q', trailing=True)
 
                 if isinstance(mixed_data, pd.DataFrame):
-                    ttm_df = mixed_data.loc[mixed_data['periodType'] == 'TTM']
-                    quarterly_df = mixed_data.loc[mixed_data['periodType'] == '3M']
+                    ttm_df = mixed_data[mixed_data['periodType'] == 'TTM']
+                    ttm_df = ttm_df.sort_values(['asOfDate'])
+                    ttm_df = ttm_df.iloc[-1:, :]             # get the latest row
+                    quarterly_df = mixed_data[mixed_data['periodType'] == '3M']
                     quarterly_df = quarterly_df.sort_values(['asOfDate'])
                     result_df = quarterly_df.iloc[-1:, :]    # get the latest row
                     result_df = result_df.astype({'asOfDate': 'str'})
-                    result_df.loc[:, ['EBIT']] = ttm_df.loc[:, ['EBIT']]
+                    result_df['EBIT'].iloc[0] = ttm_df['EBIT'].iloc[0]
                     data = result_df.to_dict('index')        # a nested dict like {index -> {column -> value}}
 
                 else:
