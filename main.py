@@ -303,32 +303,29 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
             print(f"Pulling {t} {metric}...")
             stock = Ticker(t, country=yahoo_country)
             row_dict = result.get(t, {k: math.nan for k in all_keys})
+            data = None
 
             if metric == 'financial':
-                mixed_data = stock.get_financial_data(keys, 'q', trailing=True)
+                pulled_data = stock.get_financial_data(keys, 'q', trailing=True)
 
-                if isinstance(mixed_data, pd.DataFrame):
-                    ttm_df = mixed_data[mixed_data['periodType'] == 'TTM']
+                if isinstance(pulled_data, pd.DataFrame):
+                    ttm_df = pulled_data[pulled_data['periodType'] == 'TTM']
                     ttm_df = ttm_df.sort_values(['asOfDate'])
                     ttm_df = ttm_df.iloc[-1:, :]             # get the latest row
-                    quarterly_df = mixed_data[mixed_data['periodType'] == '3M']
+                    quarterly_df = pulled_data[pulled_data['periodType'] == '3M']
                     quarterly_df = quarterly_df.sort_values(['asOfDate'])
                     result_df = quarterly_df.iloc[-1:, :]    # get the latest row
                     result_df = result_df.astype({'asOfDate': 'str'})
-                    result_df.iat[0, result_df.columns.get_loc('EBIT')] = ttm_df.iat[0, ttm_df.columns.get_loc('EBIT')]
-                    data = result_df.to_dict('index')        # a nested dict like {index -> {column -> value}}
 
-                else:
-                    data = None
+                    if len(result_df) == len(ttm_df) == 1:
+                        result_df.iat[0, result_df.columns.get_loc('EBIT')] = ttm_df.iat[0, ttm_df.columns.get_loc('EBIT')]
+                        data = result_df.to_dict('index')        # a nested dict like {index -> {column -> value}}
 
             elif metric == 'quotes':
                 data = stock.quotes
 
             elif metric == 'profile':
                 data = stock.summary_profile
-
-            else:
-                raise NotImplementedError
 
             if isinstance(data, dict) and isinstance(data.get(t), dict):
                 data = {k: v for k, v in data[t].items() if k in all_keys}
@@ -342,7 +339,7 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
                 dict_to_csv(result, part_csv_path)
 
             print()
-            time.sleep(3)
+            time.sleep(3)    # avoid yahoo api ban
 
         part_csv_path.unlink(missing_ok=True)
 
