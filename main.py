@@ -192,12 +192,10 @@ def update_db(financial_dict, db_path):
         try:
             fs.set_ticker(ticker)
             data = (ticker, fs.name, fs.sector, fs.financial_date, fs.roc, fs.earnings_yield, fs.book_market_ratio)
+            insert_data(conn, data)
 
         except Exception as e:
             print(f"Insert data error for ticker {ticker}: {e}. Going to next ticker.")
-
-        else:
-            insert_data(conn, data)
 
     if conn:
         conn.close()
