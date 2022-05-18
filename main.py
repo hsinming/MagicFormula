@@ -326,13 +326,14 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
                 data = stock.summary_profile
 
             if isinstance(data, dict) and isinstance(data.get(t), dict):
-                data = {k: v for k, v in data[t].items() if k in all_keys}
-                [print(f"\t{k} -> {v}") for k, v in data.items()]
-                row_dict.update(data)
+                new_row = {k: v for k, v in data[t].items() if k in all_keys}
+                [print(f"\t{k} -> {v}") for k, v in new_row.items()]
+                row_dict.update(new_row)
                 result[t] = row_dict
                 pulled_counter += 1
 
             if (pulled_counter + 1) % 20 == 0:
+                print()
                 print(f"Saving file in {part_csv_path}")
                 dict_to_csv(result, part_csv_path)
 
