@@ -150,8 +150,15 @@ class FinancialStatement(object):
         return self.sheet[self.ticker]["sector"]
 
     @property
-    def financial_date(self):
+    def most_recent_quarter(self):
         return self.sheet[self.ticker]["asOfDate"]
+
+    @property
+    def price_date(self):
+        timestamp = self.sheet[self.ticker]["regularMarketTime"]
+        dt_obj = datetime.fromtimestamp(timestamp)
+        dt_str = dt_obj.strftime('%Y-%m-%d')
+        return dt_str
 
     @property
     def country(self):
@@ -163,8 +170,8 @@ class FinancialStatement(object):
 
 
 def insert_data(conn, ticker_info):
-    sql = ''' REPLACE INTO stock_table (ticker, name, sector, most_recent, roc, earnings_yield, book_market_ratio)
-              VALUES(?,?,?,?,?,?,?) '''
+    sql = ''' REPLACE INTO stock_table (ticker, name, sector, most_recent_quarter, price_from, roc, earnings_yield, book_market_ratio)
+              VALUES(?,?,?,?,?,?,?,?) '''
     cur = conn.cursor()
     cur.execute(sql, ticker_info)
     conn.commit()
@@ -179,7 +186,8 @@ def update_db(financial_dict, db_path):
     ticker text PRIMARY KEY,
     name text,
     sector text,
-    most_recent DATE,
+    most_recent_quarter DATE,
+    price_from DATE,
     roc real NOT NULL,
     earnings_yield real NOT NULL,
     book_market_ratio real
@@ -191,7 +199,7 @@ def update_db(financial_dict, db_path):
 
         try:
             fs.set_ticker(ticker)
-            data = (ticker, fs.name, fs.sector, fs.financial_date, fs.roc, fs.earnings_yield, fs.book_market_ratio)
+            data = (ticker, fs.name, fs.sector, fs.most_recent_quarter, fs.price_date, fs.roc, fs.earnings_yield, fs.book_market_ratio)
             insert_data(conn, data)
 
         except Exception as e:
@@ -553,7 +561,7 @@ if __name__ == '__main__':
     financial_keys = ["asOfDate", "EBIT", "TotalAssets", "TotalDebt", 'LongTermDebtAndCapitalLeaseObligation',
                       "CurrentAssets", "CurrentLiabilities", "NetPPE", "CashCashEquivalentsAndShortTermInvestments"]
     profile_keys = ["sector", "country"]
-    quotes_keys = ["longName", "currency", "marketCap", "bookValue", "regularMarketPrice"]
+    quotes_keys = ["longName", "currency", "marketCap", "bookValue", "regularMarketPrice", "regularMarketTime"]
 
     metric_list = ["profile", "quotes", "financial"]
     keys_list = [profile_keys, quotes_keys, financial_keys]
