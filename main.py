@@ -183,14 +183,14 @@ def update_db(financial_dict, db_path):
     cursor = conn.cursor()
     cursor.execute("DROP TABLE IF EXISTS stock_table")
     cursor.execute('''CREATE TABLE IF NOT EXISTS stock_table (
-    ticker text PRIMARY KEY,
-    name text,
-    sector text,
+    ticker TEXT PRIMARY KEY NOT NULL,
+    name TEXT,
+    sector TEXT,
     most_recent_quarter DATE,
     price_from DATE,
-    roc real NOT NULL,
-    earnings_yield real NOT NULL,
-    book_market_ratio real
+    roc REAL NOT NULL,
+    earnings_yield REAL NOT NULL,
+    book_market_ratio REAL
     );''')
 
     fs = FinancialStatement(financial_dict)
@@ -215,13 +215,16 @@ def rank_stocks(db_path, csv_path):
     cursor = conn.cursor()
     query = cursor.execute(f'''
     SELECT * FROM (
-        SELECT *, roc_rank + earnings_yield_rank AS magic_rank FROM
+        SELECT *, roc_rank + earnings_yield_rank AS magic_rank 
+        FROM
         (
             SELECT *,  
             RANK () OVER( ORDER BY roc DESC) AS roc_rank,
-            RANK () OVER( ORDER BY earnings_yield DESC) AS earnings_yield_rank FROM stock_table
+            RANK () OVER( ORDER BY earnings_yield DESC) AS earnings_yield_rank 
+            FROM stock_table
         )
     )
+    WHERE book_market_ratio > 0
     ORDER BY magic_rank ASC
     ''')
 
@@ -317,14 +320,15 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
                 if isinstance(pulled_data, pd.DataFrame):
                     ttm_df = pulled_data[pulled_data['periodType'] == 'TTM']
                     ttm_df = ttm_df.sort_values(['asOfDate'])
-                    ttm_df = ttm_df.iloc[-1:, :]             # get the latest row
+                    ttm_df = ttm_df.iloc[-1:, :]                # get the latest row
                     quarterly_df = pulled_data[pulled_data['periodType'] == '3M']
                     quarterly_df = quarterly_df.sort_values(['asOfDate'])
-                    result_df = quarterly_df.iloc[-1:, :]    # get the latest row
-                    result_df = result_df.astype({'asOfDate': 'str'})
+                    quarterly_df = quarterly_df.iloc[-1:, :]    # get the latest row
 
-                    if len(result_df) == len(ttm_df) == 1:
+                    if len(quarterly_df) == len(ttm_df) == 1:
+                        result_df = quarterly_df
                         result_df.iat[0, result_df.columns.get_loc('EBIT')] = ttm_df.iat[0, ttm_df.columns.get_loc('EBIT')]
+                        result_df = result_df.astype({'asOfDate': 'str'})
                         data = result_df.to_dict('index')        # a nested dict like {index -> {column -> value}}
 
             elif metric == 'quotes':
@@ -566,7 +570,7 @@ if __name__ == '__main__':
     metric_list = ["profile", "quotes", "financial"]
     keys_list = [profile_keys, quotes_keys, financial_keys]
     force_renew_list = [args.force_profile, args.force_quotes, args.force_financial]
-    excluded_sectors = ["Financial Services", "Financial", "Utilities"]
+    excluded_sectors = ["Financial Services", "Financial", "Utilities", "Real Estate"]
     filter_list = [remove_outdated, remove_sector, remove_small_marketcap, remove_country]
     all_keys = list(chain.from_iterable(keys_list))
 
