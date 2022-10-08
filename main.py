@@ -310,7 +310,7 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
 
         for t in tickers_to_pull:
             print(f"Pulling {t} {metric}...")
-            stock = Ticker(t, country=yahoo_country)
+            stock = Ticker(t, country=country_dict[args.country.upper()])
             row_dict = result.get(t, {k: math.nan for k in all_keys})
             data = None
 
@@ -512,7 +512,7 @@ def remove_sector(input_dict: dict) -> dict:
 
 
 def remove_country(input_dict: dict) -> dict:
-    accepted_country = country_code[args.country.upper()]
+    accepted_country = country_dict[args.country.upper()]
     print(f"\nThe company country not {accepted_country} will be excluded.")
     return {k: v for k, v in input_dict.items() if v['country'] == accepted_country}
 
@@ -554,25 +554,24 @@ def main():
 if __name__ == '__main__':
     args = process_args()
     save_root = Path(args.country.upper())
-    save_root.mkdir(0o755, exist_ok=True)
+    save_root.mkdir(0o755, parents=True, exist_ok=True)
 
+    country_dict = {'US': 'United States', 'TW': 'Taiwan'}
     fn_ticker_list = 'ticker_list'
     fn_financial = 'financial'
     fn_stock_rank = 'stock_rank'
-    country_code = {'US': 'United States', 'TW': 'Taiwan'}
-    yahoo_country = country_code[args.country.upper()]
 
-    financial_keys = ["asOfDate", "EBIT", "TotalAssets", "TotalDebt", 'LongTermDebtAndCapitalLeaseObligation',
-                      "CurrentAssets", "CurrentLiabilities", "NetPPE", "CashCashEquivalentsAndShortTermInvestments"]
     profile_keys = ["sector", "country"]
     quotes_keys = ["longName", "currency", "marketCap", "bookValue", "regularMarketPrice", "regularMarketTime"]
+    financial_keys = ["asOfDate", "EBIT", "TotalAssets", "TotalDebt", 'LongTermDebtAndCapitalLeaseObligation',
+                      "CurrentAssets", "CurrentLiabilities", "NetPPE", "CashCashEquivalentsAndShortTermInvestments"]
+    keys_list = [profile_keys, quotes_keys, financial_keys]
+    all_keys = list(chain.from_iterable(keys_list))
 
     metric_list = ["profile", "quotes", "financial"]
-    keys_list = [profile_keys, quotes_keys, financial_keys]
     force_renew_list = [args.force_profile, args.force_quotes, args.force_financial]
     excluded_sectors = ["Financial Services", "Financial", "Utilities", "Real Estate"]
     filter_list = [remove_outdated, remove_sector, remove_small_marketcap, remove_country]
-    all_keys = list(chain.from_iterable(keys_list))
 
     start = time.time()
     main()
