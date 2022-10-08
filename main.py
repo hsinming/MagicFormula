@@ -1,8 +1,8 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 """
 @author: Hsin-ming Chen
-@license: GNU V3
+@license: GPL
 @file: main.py
 @time: 2022/05/01
 @contact: hsinming.chen@gmail.com
@@ -12,10 +12,10 @@ import json
 import argparse
 import math
 import time
+import sqlite3 as sq
 from datetime import datetime, timedelta
 from pathlib import Path
 from ftplib import FTP
-import sqlite3 as sq
 from itertools import chain
 import pandas as pd
 import requests
