@@ -43,8 +43,10 @@ dependencies:
   - xz=5.2.5=h1de35cc_0
   - zlib=1.2.12=h4dc903c_2
   - pip:
+    - currencyconverter==0.17.4
     - lxml==4.8.0
     - requests-futures==1.0.0
     - tqdm==4.64.0
+    - twder==0.2.2
     - yahooquery==2.2.15
 prefix: /Users/hsinming/opt/anaconda3/envs/stock
