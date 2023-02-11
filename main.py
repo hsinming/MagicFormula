@@ -439,6 +439,7 @@ def download_ticker_list(country_code: str) -> list:
             series = df['公司代號']
             ticker_list += [f'{ticker}{suffix}' for ticker in series.to_list()]
 
+    ticker_list = [t for t in ticker_list if isinstance(t, str)]    # exclude nan
     return ticker_list
 
 
