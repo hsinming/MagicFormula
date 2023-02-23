@@ -34,7 +34,7 @@ class FinancialStatement(object):
         self.ticker = ticker
 
     @property
-    def ebit(self):
+    def ebit_ttm(self):
         return self.sheet[self.ticker]["EBIT"]
 
     @property
@@ -133,13 +133,19 @@ class FinancialStatement(object):
 
     @property
     def roc(self):
-        return self.ebit / (self.net_working_capital + self.net_fixed_assets)
+        """
+        https://www.valuesignals.com/Glossary/Details/ROC
+        ROC = EBIT_TTM / (Net Working Capital + Net Fixed Assets)
+        """
+        return self.ebit_ttm / (self.net_working_capital + self.net_fixed_assets)
 
     @property
     def earnings_yield(self):
-        """ https://www.valuesignals.com/Glossary/Details/Earnings_Yield/13381
         """
-        return self.ebit / self.enterprise_value
+        https://www.valuesignals.com/Glossary/Details/Earnings_Yield/13381
+        earnings yield = EBIT_TTM / enterprise value
+        """
+        return self.ebit_ttm / self.enterprise_value
 
     @property
     def book_market_ratio(self):
@@ -297,9 +303,7 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
         tickers_to_pull = ticker_list
 
     else:
-
         for t in ticker_list:
-
             if t not in result.keys() or not is_complete(result[t], keys, 1):
                 tickers_to_pull.append(t)
 
@@ -326,10 +330,13 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
                     quarterly_df = quarterly_df.iloc[-1:, :]    # get the latest row
 
                     if len(quarterly_df) == len(ttm_df) == 1:
-                        result_df = quarterly_df
+                        result_df = quarterly_df                # financial data mostly comes from quarterly_df
+
+                        # replace quarterly EBIT with EBIT(TTM)
                         result_df.iat[0, result_df.columns.get_loc('EBIT')] = ttm_df.iat[0, ttm_df.columns.get_loc('EBIT')]
+
                         result_df = result_df.astype({'asOfDate': 'str'})
-                        data = result_df.to_dict('index')        # a nested dict like {index -> {column -> value}}
+                        data = result_df.to_dict('index')       # a nested dict like {index -> {column -> value}}
 
             elif metric == 'quotes':
                 data = stock.quotes
@@ -337,6 +344,7 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
             elif metric == 'profile':
                 data = stock.summary_profile
 
+            # renew row by row
             if isinstance(data, dict) and isinstance(data.get(t), dict):
                 new_row = {k: v for k, v in data[t].items() if k in all_keys}
                 [print(f"\t{k} -> {v}") for k, v in new_row.items()]
@@ -344,13 +352,14 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
                 result[t] = row_dict
                 pulled_counter += 1
 
+            # save csv every 20 successful retrival
             if (pulled_counter + 1) % 20 == 0:
                 print()
                 print(f"Saving file in {part_csv_path}")
                 dict_to_csv(result, part_csv_path)
 
             print()
-            time.sleep(3)    # avoid yahoo api ban
+            time.sleep(3)    # avoid ban by yahoo api
 
         part_csv_path.unlink(missing_ok=True)
 
