@@ -15,6 +15,7 @@ import time
 import sqlite3 as sq
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any
 from ftplib import FTP
 from itertools import chain
 import pandas as pd
@@ -33,68 +34,67 @@ class FinancialStatement(object):
     def set_ticker(self, ticker: str):
         self.ticker = ticker
 
+    def get_value(self, key: str) -> Any:
+        result = self.sheet[self.ticker][key]
+        if math.isnan(result):
+            print(f"Missing {key} for {self.ticker}")
+            result = 0
+        return result
+
     @property
     def ebit_ttm(self):
-        return self.sheet[self.ticker]["EBIT"]
+        return self.get_value('EBIT')
 
     @property
     def total_assets(self):
-        return self.sheet[self.ticker]["TotalAssets"]
+        return self.get_value('TotalAssets')
 
     @property
     def total_debt(self):
-        return self.sheet[self.ticker]["TotalDebt"]
+        return self.get_value('TotalDebt')
 
     @property
     def current_assets(self):
-        result = self.sheet[self.ticker]["CurrentAssets"]
-        if math.isnan(result):
-            print(f"Missing current assets for {self.ticker}")
-            result = 0
-        return result
+        return self.get_value('CurrentAssets')
 
     @property
     def current_liabilities(self):
-        result = self.sheet[self.ticker]["CurrentLiabilities"]
-        if math.isnan(result):
-            print(f"Missing current liabilities for {self.ticker}")
-            result = 0
-        return result
+        return self.get_value('CurrentLiabilities')
 
     @property
     def longterm_debt(self):
-        result = self.sheet[self.ticker]['LongTermDebtAndCapitalLeaseObligation']
-        if math.isnan(result):
-            print(f"Missing longterm debt for {self.ticker}")
-            result = 0
-        return result
+        return self.get_value('LongTermDebtAndCapitalLeaseObligation')
+
+    @property
+    def minority_interest(self):
+        return self.get_value('MinorityInterest')
+
+    @property
+    def preferred_stock(self):
+        return self.get_value('PreferredStock')
 
     @property
     def total_cash(self):
-        result = self.sheet[self.ticker]["CashCashEquivalentsAndShortTermInvestments"]
-        if math.isnan(result):
-            print(f"Missing total cash for {self.ticker}")
-            result = 0
-        return result
+        """
+        https://www.valupaedia.com/index.php/business-dictionary/552-excess-cash
+        Total Cash = Cash and cash equivalents + short term investments
+        """
+        return self.get_value('CashCashEquivalentsAndShortTermInvestments')
 
     @property
     def excess_cash(self):
         """ There are many definitions of excess cash.
         definition 1 : https://www.valupaedia.com/index.php/business-dictionary/552-excess-cash
-        excess_cash = self.total_cash - max(0, self.current_liabilities - (self.current_assets - self.total_cash))
+        excess_cash = total_cash - max(0, current_liabilities - (current_assets - total_cash))
 
         definition 2: https://www.quant-investing.com/glossary/excess-cash
-        excess_cash = min(self.total_cash, max(self.current_assets - 2.0 * self.current_liabilities, 0))
+        excess_cash = min(total_cash, max(0, current_assets - 2.0 * current_liabilities))
         """
         return self.total_cash - max(0, self.current_liabilities - (self.current_assets - self.total_cash))
 
     @property
     def net_property_plant_equipment(self):
-        try:
-            return self.sheet[self.ticker]["NetPPE"]
-        except Exception as e:
-            print(f"Missing net PPE for {self.ticker}\n{e}")
-            return 0
+        return self.get_value('NetPPE')
 
     @property
     def net_fixed_assets(self):
@@ -109,27 +109,30 @@ class FinancialStatement(object):
 
     @property
     def net_working_capital(self):
-        """ https://www.valuesignals.com/Glossary/Details/Net_Working_Capital?securityId=13381
         """
-        return max(0, (self.current_assets - self.excess_cash - (
-                self.current_liabilities - (self.total_debt - self.longterm_debt))))
+        https://www.valuesignals.com/Glossary/Details/Net_Working_Capital?securityId=13381
+        Net Working Capital = MAX(0, Current Asset - Excess Cash - (Current Liability - (Total Debt - Long Term Debt)))
+        """
+        return max(0, (self.current_assets - self.excess_cash - (self.current_liabilities - (self.total_debt - self.longterm_debt))))
 
     @property
     def market_cap(self):
-        """ https://www.valuesignals.com/Glossary/Details/Market_Capitalization/13381
         """
-        return self.sheet[self.ticker]["marketCap"]
+        https://www.valuesignals.com/Glossary/Details/Market_Capitalization/13381
+        market cap = share price * common share outstanding
+        """
+        return self.get_value('marketCap')
 
     @property
     def enterprise_value(self):
         """
         definition 1: https://www.quant-investing.com/glossary/enterprise-value
-        EV = market cap + long-term debt + minority interest + preferred stock - excess cash
+        Enterprise value = market cap + long-term debt + minority interest + preferred stock - excess cash
 
         definition 2: https://www.valuesignals.com/Glossary/Details/Enterprise_Value/13381
-        EV = market cap + total debt + minority interest + preferred stock - total cash
+        Enterprise value = market cap + total debt + minority interest + preferred stock - total cash
         """
-        return self.market_cap + self.longterm_debt - self.excess_cash
+        return self.market_cap + self.longterm_debt + self.minority_interest + self.preferred_stock - self.excess_cash
 
     @property
     def roc(self):
@@ -143,13 +146,15 @@ class FinancialStatement(object):
     def earnings_yield(self):
         """
         https://www.valuesignals.com/Glossary/Details/Earnings_Yield/13381
-        earnings yield = EBIT_TTM / enterprise value
+        earnings yield = EBIT_TTM / Enterprise Value
         """
         return self.ebit_ttm / self.enterprise_value
 
     @property
     def book_market_ratio(self):
-        return self.sheet[self.ticker]["bookValue"] / self.sheet[self.ticker]["regularMarketPrice"]
+        book = self.get_value('bookValue')
+        price = self.get_value('regularMarketPrice') if self.get_value('regularMarketPrice') > 0 else -1
+        return book / price
 
     @property
     def sector(self):
@@ -202,7 +207,6 @@ def update_db(financial_dict, db_path):
     fs = FinancialStatement(financial_dict)
 
     for ticker in financial_dict.keys():
-
         try:
             fs.set_ticker(ticker)
             data = (ticker, fs.name, fs.sector, fs.most_recent_quarter, fs.price_date, fs.roc, fs.earnings_yield, fs.book_market_ratio)
@@ -255,7 +259,6 @@ def change_to_new_keys(input_dict: dict) -> dict:
         new_row = {k: math.nan for k in all_keys}
 
         for k, v in old_row.items():
-
             if k in all_keys:
                 new_row[k] = v
 
@@ -268,9 +271,7 @@ def is_complete(input_dict: dict, keys_to_check: list, min_required: int) -> boo
     check_list = []
 
     for k in keys_to_check:
-
         if input_dict.get(k) is not None:
-
             if isinstance(input_dict[k], str) and input_dict[k] != '':
                 check_list.append(True)
 
@@ -296,7 +297,7 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
         new_dict = change_to_new_keys(old_dict)
         result.update(new_dict)
 
-    # keep only those tickers in ticker_list
+    # Keep only those tickers in ticker_list
     result = {k: v for k, v in result.items() if k in ticker_list}
 
     if is_forced:
@@ -324,17 +325,18 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
                 if isinstance(pulled_data, pd.DataFrame):
                     ttm_df = pulled_data[pulled_data['periodType'] == 'TTM']
                     ttm_df = ttm_df.sort_values(['asOfDate'])
-                    ttm_df = ttm_df.iloc[-1:, :]                # get the latest row
+                    ttm_df = ttm_df.iloc[-1:, :]                # get the latest TTM
                     quarterly_df = pulled_data[pulled_data['periodType'] == '3M']
                     quarterly_df = quarterly_df.sort_values(['asOfDate'])
-                    quarterly_df = quarterly_df.iloc[-1:, :]    # get the latest row
+                    quarterly_df = quarterly_df.iloc[-1:, :]    # get the latest quarter
 
                     if len(quarterly_df) == len(ttm_df) == 1:
-                        result_df = quarterly_df                # financial data mostly comes from quarterly_df
+                        result_df = quarterly_df                # financial data comes mainly from quarterly_df
 
                         # replace quarterly EBIT with EBIT(TTM)
                         result_df.iat[0, result_df.columns.get_loc('EBIT')] = ttm_df.iat[0, ttm_df.columns.get_loc('EBIT')]
 
+                        # convert DateTime type to string to save in dict
                         result_df = result_df.astype({'asOfDate': 'str'})
                         data = result_df.to_dict('index')       # a nested dict like {index -> {column -> value}}
 
@@ -344,7 +346,7 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
             elif metric == 'profile':
                 data = stock.summary_profile
 
-            # renew row by row
+            # Renew row by row
             if isinstance(data, dict) and isinstance(data.get(t), dict):
                 new_row = {k: v for k, v in data[t].items() if k in all_keys}
                 [print(f"\t{k} -> {v}") for k, v in new_row.items()]
@@ -352,7 +354,7 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
                 result[t] = row_dict
                 pulled_counter += 1
 
-            # save csv every 20 successful retrival
+            # Save csv every 20 successful retrival
             if (pulled_counter + 1) % 20 == 0:
                 print()
                 print(f"Saving file in {part_csv_path}")
@@ -385,7 +387,7 @@ def download_ticker_list(country_code: str) -> list:
     ticker_list = []
 
     if country_code.upper() == 'US':
-        """ US stock data from:
+        """ Get US stock tickers from:
         https://www.nasdaqtrader.com/trader.aspx?id=symboldirdefs
         ftp://ftp.nasdaqtrader.com/symboldirectory/nasdaqlisted.txt
         ftp://ftp.nasdaqtrader.com/symboldirectory/otherlisted.txt
@@ -405,7 +407,6 @@ def download_ticker_list(country_code: str) -> list:
             ftp_server.cwd('symboldirectory')
 
             for file in [nasdaq_list, non_nasdaq_list]:
-
                 with open(file, 'wb') as fp:
                     ftp_server.retrbinary(f"RETR {file}", fp.write)
 
@@ -434,9 +435,11 @@ def download_ticker_list(country_code: str) -> list:
             ticker_list += non_nasdaq_ticker_list
 
     if country_code.upper() == 'TW':
-        """ TWSE data from:
+        """ Get TWSE tickers from:
         https://data.gov.tw/datasets/search?p=1&size=10
-        key words = ["上市公司基本資料", "上櫃股票基本資料"]
+        search key words = ["上市公司基本資料", "上櫃股票基本資料"]
+        上市公司基本資料 https://mopsfin.twse.com.tw/opendata/t187ap03_L.csv
+        上櫃股票基本資料 https://mopsfin.twse.com.tw/opendata/t187ap03_O.csv
         """
         stock_csv = 'https://mopsfin.twse.com.tw/opendata/t187ap03_L.csv'
         otc_csv = 'https://mopsfin.twse.com.tw/opendata/t187ap03_O.csv'
@@ -456,13 +459,13 @@ def get_ticker_list(country_code: str) -> list:
     ticker_list_path = save_root / f'{fn_ticker_list}.json'
 
     if ticker_list_path.is_file():
-        print("Loading ticker list...")
+        print("Loading the ticker list...")
 
         with ticker_list_path.open('rt') as fp:
             ticker_list = json.load(fp)
 
     else:
-        print("Get ticker list...")
+        print("Download the ticker list...")
         ticker_list = download_ticker_list(country_code)
 
         with ticker_list_path.open('wt') as fp:
@@ -546,10 +549,9 @@ def process_args():
 def main():
     # Retrieve or load ticker list
     ticker_list = get_ticker_list(args.country)
-
-    # Load old financial data then update it
     financial_dict = {}
 
+    # Load old financial data then update it
     for metric, keys, is_forced in zip(metric_list, keys_list, force_renew_list):
         financial_dict = get_financial(ticker_list, metric, keys, is_forced)
 
@@ -574,7 +576,8 @@ if __name__ == '__main__':
     profile_keys = ["sector", "country"]
     quotes_keys = ["longName", "currency", "marketCap", "bookValue", "regularMarketPrice", "regularMarketTime"]
     financial_keys = ["asOfDate", "EBIT", "TotalAssets", "TotalDebt", 'LongTermDebtAndCapitalLeaseObligation',
-                      "CurrentAssets", "CurrentLiabilities", "NetPPE", "CashCashEquivalentsAndShortTermInvestments"]
+                      "CurrentAssets", "CurrentLiabilities", "NetPPE", "CashCashEquivalentsAndShortTermInvestments",
+                      "MinorityInterest", "PreferredStock"]
     keys_list = [profile_keys, quotes_keys, financial_keys]
     all_keys = list(chain.from_iterable(keys_list))
 
