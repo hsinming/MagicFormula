@@ -4,7 +4,7 @@
 @author: Hsin-ming Chen
 @license: GPL
 @file: main.py
-@time: 2022/05/01
+@time: 2023/02/25
 @contact: hsinming.chen@gmail.com
 @software: PyCharm
 """
@@ -372,14 +372,13 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
 
 
 def download_csv_to_df(url: str) -> pd.DataFrame:
-    tmp_csv = Path('tmp.csv')
+    csv_path = save_root / url.split('/')[-1]
 
-    with tmp_csv.open('wb') as fp:
+    with csv_path.open('wb') as fp:
         content = requests.get(url).content
         fp.write(content)
 
-    df = pd.read_csv(tmp_csv)
-    tmp_csv.unlink()
+    df = pd.read_csv(csv_path)
     return df
 
 
@@ -392,8 +391,8 @@ def download_ticker_list(country_code: str) -> list:
         ftp://ftp.nasdaqtrader.com/symboldirectory/nasdaqlisted.txt
         ftp://ftp.nasdaqtrader.com/symboldirectory/otherlisted.txt
         """
-        nasdaq_list = 'nasdaqlisted.txt'
-        non_nasdaq_list = 'otherlisted.txt'
+        nasdaq_security_path = save_root / 'nasdaqlisted.txt'
+        other_security_path = save_root / 'otherlisted.txt'
 
         try:
             ftp_server = FTP('ftp.nasdaqtrader.com', user='anonymous', passwd='', timeout=5)
@@ -405,15 +404,13 @@ def download_ticker_list(country_code: str) -> list:
 
         else:
             ftp_server.cwd('symboldirectory')
-
-            for file in [nasdaq_list, non_nasdaq_list]:
-                with open(file, 'wb') as fp:
+            for file, save_path in [('nasdaqlisted.txt', nasdaq_security_path), ('otherlisted.txt', other_security_path)]:
+                with save_path.open('wb') as fp:
                     ftp_server.retrbinary(f"RETR {file}", fp.write)
-
             ftp_server.quit()
 
-        if Path(nasdaq_list).is_file():
-            nasdaq_df = pd.read_csv(nasdaq_list, sep='|')
+        if Path(nasdaq_security_path).is_file():
+            nasdaq_df = pd.read_csv(nasdaq_security_path, sep='|')
             mask1 = (nasdaq_df['Market Category'].isin(['Q', 'G']))  # Q=NASDAQ Global Select, G=NASDAQ Global
             mask2 = (nasdaq_df['Test Issue'] == 'N')
             mask3 = (nasdaq_df['Financial Status'] == 'N')
@@ -423,8 +420,8 @@ def download_ticker_list(country_code: str) -> list:
             nasdaq_ticker_list = nasdaq_df['Symbol'].to_list()
             ticker_list += nasdaq_ticker_list
 
-        if Path(non_nasdaq_list).is_file():
-            non_nasdaq_df = pd.read_csv(non_nasdaq_list, sep='|')
+        if Path(other_security_path).is_file():
+            non_nasdaq_df = pd.read_csv(other_security_path, sep='|')
             mask6 = (non_nasdaq_df['Exchange'].isin(['N', 'A']))  # N=NYSE  A=NYSE MKT(AMEX)
             mask7 = (non_nasdaq_df['ETF'] == 'N')
             mask8 = (non_nasdaq_df['Test Issue'] == 'N')
@@ -444,7 +441,7 @@ def download_ticker_list(country_code: str) -> list:
         stock_csv = 'https://mopsfin.twse.com.tw/opendata/t187ap03_L.csv'
         otc_csv = 'https://mopsfin.twse.com.tw/opendata/t187ap03_O.csv'
         csv_urls = [stock_csv, otc_csv]
-        suffixes = ['.TW', '.TWO']
+        suffixes = ['.TW', '.TWO']    # for Yahoo Finance's naming rule
 
         for url, suffix in zip(csv_urls, suffixes):
             df = download_csv_to_df(url)
@@ -559,6 +556,7 @@ def main():
     for f in filter_list:
         financial_dict = f(financial_dict)
 
+    # Update database and rank stocks
     update_db(financial_dict, save_root / f"{fn_stock_rank}.db")
     rank_stocks(save_root / f"{fn_stock_rank}.db", save_root / f"{fn_stock_rank}.csv")
 
@@ -573,9 +571,10 @@ if __name__ == '__main__':
     fn_financial = 'financial'
     fn_stock_rank = 'stock_rank'
 
+    # https://yahooquery.dpguthrie.com/guide/ticker/financials/#get_financial_data
     profile_keys = ["sector", "country"]
     quotes_keys = ["longName", "currency", "marketCap", "bookValue", "regularMarketPrice", "regularMarketTime"]
-    financial_keys = ["asOfDate", "EBIT", "TotalAssets", "TotalDebt", 'LongTermDebtAndCapitalLeaseObligation',
+    financial_keys = ["asOfDate", "EBIT", "TotalAssets", "TotalDebt", "LongTermDebtAndCapitalLeaseObligation",
                       "CurrentAssets", "CurrentLiabilities", "NetPPE", "CashCashEquivalentsAndShortTermInvestments",
                       "MinorityInterest", "PreferredStock"]
     keys_list = [profile_keys, quotes_keys, financial_keys]
