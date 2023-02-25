@@ -415,7 +415,9 @@ def download_ticker_list(country_code: str) -> list:
             mask2 = (nasdaq_df['Test Issue'] == 'N')
             mask3 = (nasdaq_df['Financial Status'] == 'N')
             mask4 = (nasdaq_df['ETF'] == 'N')
-            mask5 = ~(nasdaq_df['Security Name'].str.contains('Unit|Warrant|Right|Preferred|Convertible', case=True, na=False))
+            nasdaq_bad_keywords = ['Preferred', 'Convertible', 'Fund', 'Notes', 'Debentures', 'Depositary', 'Warrant',
+                                   'ADR', 'ADS', 'ETF', 'ETN', '%', '\$', '- Right', '- Unit', '- Subunit']
+            mask5 = ~(nasdaq_df['Security Name'].str.contains('|'.join(nasdaq_bad_keywords), case=True, na=False))
             nasdaq_df = nasdaq_df[mask1 & mask2 & mask3 & mask4 & mask5]
             nasdaq_ticker_list = nasdaq_df['Symbol'].to_list()
             ticker_list += nasdaq_ticker_list
@@ -425,10 +427,13 @@ def download_ticker_list(country_code: str) -> list:
             mask6 = (non_nasdaq_df['Exchange'].isin(['N', 'A']))  # N=NYSE  A=NYSE MKT(AMEX)
             mask7 = (non_nasdaq_df['ETF'] == 'N')
             mask8 = (non_nasdaq_df['Test Issue'] == 'N')
-            mask9 = ~(non_nasdaq_df['Security Name'].str.contains('Unit|Warrant|Right|Preferred|Convertible', case=True, na=False))
-            mask10 = ~(non_nasdaq_df['ACT Symbol'].str.contains('\.U|\.W|\.R|\$|\.D|\.Z|\.V', case=True, na=False))
+            other_bad_keywords = ['Preferred', 'Convertible', 'Fund', 'Notes', 'Debentures', 'Depositary', 'Warrant',
+                                  'ADR', 'ADS', 'ETF', 'ETN', '%', '\$']
+            mask9 = ~(non_nasdaq_df['Security Name'].str.contains('|'.join(other_bad_keywords), case=True, na=False))
+            mask10 = ~(non_nasdaq_df['ACT Symbol'].str.contains('\.U|\.W|\.R|\.D|\.Z|\.V|\$', case=True, na=False))
             non_nasdaq_df = non_nasdaq_df[mask6 & mask7 & mask8 & mask9 & mask10]
             non_nasdaq_ticker_list = non_nasdaq_df['ACT Symbol'].to_list()
+            non_nasdaq_ticker_list = [t.replace('.', '-') for t in non_nasdaq_ticker_list]    #Yahoo Finance's naming rule
             ticker_list += non_nasdaq_ticker_list
 
     if country_code.upper() == 'TW':
