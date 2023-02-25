@@ -48,5 +48,5 @@ dependencies:
     - requests-futures==1.0.0
     - tqdm==4.64.0
     - twder==0.2.2
-    - yahooquery==2.2.15
+    - yahooquery==2.3.0
 prefix: /Users/hsinming/opt/anaconda3/envs/stock

@@ -1,4 +1,13 @@
 .idea/
+US/*part.csv
+US/*.db
+US/*.txt
+US/*.json
+TW/*part.csv
+TW/*.db
+TW/*_L.csv
+TW/*_O.csv
+TW/*.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
