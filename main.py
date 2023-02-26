@@ -34,7 +34,7 @@ class FinancialStatement(object):
     def set_ticker(self, ticker: str):
         self.ticker = ticker
 
-    def get_value(self, key: str) -> Any:
+    def _get_value(self, key: str) -> Any:
         result = self.sheet[self.ticker][key]
         if math.isnan(result):
             print(f"Missing {key} for {self.ticker}")
@@ -43,35 +43,35 @@ class FinancialStatement(object):
 
     @property
     def ebit_ttm(self):
-        return self.get_value('EBIT')
+        return self._get_value('EBIT')
 
     @property
     def total_assets(self):
-        return self.get_value('TotalAssets')
+        return self._get_value('TotalAssets')
 
     @property
     def total_debt(self):
-        return self.get_value('TotalDebt')
+        return self._get_value('TotalDebt')
 
     @property
     def current_assets(self):
-        return self.get_value('CurrentAssets')
+        return self._get_value('CurrentAssets')
 
     @property
     def current_liabilities(self):
-        return self.get_value('CurrentLiabilities')
+        return self._get_value('CurrentLiabilities')
 
     @property
     def longterm_debt(self):
-        return self.get_value('LongTermDebtAndCapitalLeaseObligation')
+        return self._get_value('LongTermDebtAndCapitalLeaseObligation')
 
     @property
     def minority_interest(self):
-        return self.get_value('MinorityInterest')
+        return self._get_value('MinorityInterest')
 
     @property
     def preferred_stock(self):
-        return self.get_value('PreferredStock')
+        return self._get_value('PreferredStock')
 
     @property
     def total_cash(self):
@@ -79,7 +79,7 @@ class FinancialStatement(object):
         https://www.valupaedia.com/index.php/business-dictionary/552-excess-cash
         Total Cash = Cash and cash equivalents + short term investments
         """
-        return self.get_value('CashCashEquivalentsAndShortTermInvestments')
+        return self._get_value('CashCashEquivalentsAndShortTermInvestments')
 
     @property
     def excess_cash(self):
@@ -94,7 +94,7 @@ class FinancialStatement(object):
 
     @property
     def net_property_plant_equipment(self):
-        return self.get_value('NetPPE')
+        return self._get_value('NetPPE')
 
     @property
     def net_fixed_assets(self):
@@ -121,7 +121,7 @@ class FinancialStatement(object):
         https://www.valuesignals.com/Glossary/Details/Market_Capitalization/13381
         market cap = share price * common share outstanding
         """
-        return self.get_value('marketCap')
+        return self._get_value('marketCap')
 
     @property
     def enterprise_value(self):
@@ -152,8 +152,8 @@ class FinancialStatement(object):
 
     @property
     def book_market_ratio(self):
-        book = self.get_value('bookValue')
-        price = self.get_value('regularMarketPrice') if self.get_value('regularMarketPrice') > 0 else -1
+        book = self._get_value('bookValue')
+        price = self._get_value('regularMarketPrice') if self._get_value('regularMarketPrice') > 0 else -1
         return book / price
 
     @property
@@ -433,7 +433,7 @@ def download_ticker_list(country_code: str) -> list:
             mask10 = ~(non_nasdaq_df['ACT Symbol'].str.contains('\.U|\.W|\.R|\.D|\.Z|\.V|\$', case=True, na=False))
             non_nasdaq_df = non_nasdaq_df[mask6 & mask7 & mask8 & mask9 & mask10]
             non_nasdaq_ticker_list = non_nasdaq_df['ACT Symbol'].to_list()
-            non_nasdaq_ticker_list = [t.replace('.', '-') for t in non_nasdaq_ticker_list]    #Yahoo Finance's naming rule
+            non_nasdaq_ticker_list = [t.replace('.', '-') for t in non_nasdaq_ticker_list]    # Yahoo Finance's naming rule
             ticker_list += non_nasdaq_ticker_list
 
     if country_code.upper() == 'TW':
@@ -498,7 +498,6 @@ def remove_small_marketcap(input_dict: dict) -> dict:
     result = {}
 
     for k, v in input_dict.items():
-
         try:
             market_cap = float(v['marketCap'])
             currency = str(v['currency']).upper()
@@ -507,12 +506,11 @@ def remove_small_marketcap(input_dict: dict) -> dict:
             continue
 
         if not math.isnan(market_cap):
-
             if currency == 'TWD':
                 market_cap_in_usd = market_cap / twd_converter
 
             else:
-                market_cap_in_usd = usd_converter.convert(market_cap, currency, 'USD')  # TWD not included.
+                market_cap_in_usd = usd_converter.convert(market_cap, currency, 'USD')    # TWD is not included.
 
             if market_cap_in_usd >= args.min_market_cap:
                 result[k] = v
