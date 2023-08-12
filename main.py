@@ -586,7 +586,7 @@ if __name__ == '__main__':
     all_keys = list(chain.from_iterable(keys_list))
 
     metric_list = ["profile", "price", "stat", "financial"]
-    force_renew_list = [True, True, True, True]
+    force_renew_list = [False, False, False, False]
     excluded_sectors = ["Financial Services", "Utilities", "Real Estate"]
     filter_list = [remove_outdated, remove_sector, remove_small_marketcap, remove_country]
 
