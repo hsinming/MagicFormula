@@ -36,7 +36,7 @@ class FinancialStatement(object):
 
     def _get_value(self, key: str) -> Any:
         result = self.sheet[self.ticker][key]
-        if math.isnan(result):
+        if math.isnan(result):  #TODO fix str problem in bookValue
             print(f"Missing {key} for {self.ticker}")
             result = 0
         return result
@@ -151,10 +151,17 @@ class FinancialStatement(object):
         return self.ebit_ttm / self.enterprise_value
 
     @property
-    def book_market_ratio(self):
-        book = self._get_value('bookValue')
+    def book_value(self):
+        return self._get_value('bookValue')
+
+    @property
+    def regular_market_price(self):
         price = self._get_value('regularMarketPrice') if self._get_value('regularMarketPrice') > 0 else -1
-        return book / price
+        return price
+
+    @property
+    def book_market_ratio(self):
+        return self.book_value / self.regular_market_price
 
     @property
     def sector(self):
@@ -208,14 +215,18 @@ def update_db(financial_dict, db_path):
 
     for ticker in financial_dict.keys():
         fs.set_ticker(ticker)
+        data = (ticker, fs.name, fs.sector, fs.most_recent_quarter, fs.price_date, fs.roc, fs.earnings_yield,
+                fs.book_market_ratio)
+        insert_data(conn, data)
 
-        try:
-            data = (ticker, fs.name, fs.sector, fs.most_recent_quarter, fs.price_date, fs.roc, fs.earnings_yield, fs.book_market_ratio)
-        except Exception as e:
-            print(f"Insert data error for ticker {ticker}: {e}. Going to next ticker.")
-            continue
-        else:
-            insert_data(conn, data)
+        # TODO: recover this
+        # try:
+        #     data = (ticker, fs.name, fs.sector, fs.most_recent_quarter, fs.price_date, fs.roc, fs.earnings_yield, fs.book_market_ratio)
+        # except Exception as e:
+        #     print(f"Insert data error for ticker {ticker}: {e}. Going to next ticker.")
+        #     continue
+        # else:
+        #     insert_data(conn, data)
 
     if conn:
         conn.close()
@@ -256,16 +267,12 @@ def dict_to_csv(input_dict: dict, csv_path: Path):
 
 def change_to_new_keys(input_dict: dict) -> dict:
     result = {}
-
     for ticker, old_row in input_dict.items():
         new_row = {k: math.nan for k in all_keys}
-
         for k, v in old_row.items():
             if k in all_keys:
                 new_row[k] = v
-
         result[ticker] = new_row
-
     return result
 
 
@@ -586,7 +593,7 @@ if __name__ == '__main__':
     all_keys = list(chain.from_iterable(keys_list))
 
     metric_list = ["profile", "price", "stat", "financial"]
-    force_renew_list = [False, False, False, False]
+    force_renew_list = [False, False, False, False]  # TODO: recover this
     excluded_sectors = ["Financial Services", "Utilities", "Real Estate"]
     filter_list = [remove_outdated, remove_sector, remove_small_marketcap, remove_country]
 
