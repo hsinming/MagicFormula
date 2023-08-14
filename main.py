@@ -4,7 +4,7 @@
 @author: Hsin-ming Chen
 @license: GPL
 @file: main.py
-@time: 2023/08/12
+@time: 2023/08/14
 @contact: hsinming.chen@gmail.com
 @software: PyCharm
 """
@@ -15,7 +15,6 @@ import time
 import sqlite3 as sq
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
 from ftplib import FTP
 from itertools import chain
 import pandas as pd
@@ -34,44 +33,46 @@ class FinancialStatement(object):
     def set_ticker(self, ticker: str):
         self.ticker = ticker
 
-    def _get_value(self, key: str) -> Any:
+    def _get_number(self, key: str) -> float:
         result = self.sheet[self.ticker][key]
-        if math.isnan(result):  #TODO fix str problem in bookValue
-            print(f"Missing {key} for {self.ticker}")
-            result = 0
+        if isinstance(result, str):
+            result = float(result)
+        if math.isnan(result):
+            print(f"Missing {key} for {self.ticker}. Set to zero.")
+            result = 0.0
         return result
 
     @property
     def ebit_ttm(self):
-        return self._get_value('EBIT')
+        return self._get_number('EBIT')
 
     @property
     def total_assets(self):
-        return self._get_value('TotalAssets')
+        return self._get_number('TotalAssets')
 
     @property
     def total_debt(self):
-        return self._get_value('TotalDebt')
+        return self._get_number('TotalDebt')
 
     @property
     def current_assets(self):
-        return self._get_value('CurrentAssets')
+        return self._get_number('CurrentAssets')
 
     @property
     def current_liabilities(self):
-        return self._get_value('CurrentLiabilities')
+        return self._get_number('CurrentLiabilities')
 
     @property
     def longterm_debt(self):
-        return self._get_value('LongTermDebtAndCapitalLeaseObligation')
+        return self._get_number('LongTermDebtAndCapitalLeaseObligation')
 
     @property
     def minority_interest(self):
-        return self._get_value('MinorityInterest')
+        return self._get_number('MinorityInterest')
 
     @property
     def preferred_stock(self):
-        return self._get_value('PreferredStock')
+        return self._get_number('PreferredStock')
 
     @property
     def total_cash(self):
@@ -79,7 +80,7 @@ class FinancialStatement(object):
         https://www.valupaedia.com/index.php/business-dictionary/552-excess-cash
         Total Cash = Cash and cash equivalents + short term investments
         """
-        return self._get_value('CashCashEquivalentsAndShortTermInvestments')
+        return self._get_number('CashCashEquivalentsAndShortTermInvestments')
 
     @property
     def excess_cash(self):
@@ -94,7 +95,7 @@ class FinancialStatement(object):
 
     @property
     def net_property_plant_equipment(self):
-        return self._get_value('NetPPE')
+        return self._get_number('NetPPE')
 
     @property
     def net_fixed_assets(self):
@@ -121,7 +122,7 @@ class FinancialStatement(object):
         https://www.valuesignals.com/Glossary/Details/Market_Capitalization/13381
         market cap = share price * common share outstanding
         """
-        return self._get_value('marketCap')
+        return self._get_number('marketCap')
 
     @property
     def enterprise_value(self):
@@ -152,11 +153,11 @@ class FinancialStatement(object):
 
     @property
     def book_value(self):
-        return self._get_value('bookValue')
+        return self._get_number('bookValue')
 
     @property
     def regular_market_price(self):
-        price = self._get_value('regularMarketPrice') if self._get_value('regularMarketPrice') > 0 else -1
+        price = self._get_number('regularMarketPrice') if self._get_number('regularMarketPrice') > 0 else -1
         return price
 
     @property
@@ -210,16 +211,12 @@ def update_db(financial_dict, db_path):
     earnings_yield REAL NOT NULL,
     book_market_ratio REAL
     );''')
-
     fs = FinancialStatement(financial_dict)
-
     for ticker in financial_dict.keys():
         fs.set_ticker(ticker)
         data = (ticker, fs.name, fs.sector, fs.most_recent_quarter, fs.price_date, fs.roc, fs.earnings_yield,
                 fs.book_market_ratio)
         insert_data(conn, data)
-
-        # TODO: recover this
         # try:
         #     data = (ticker, fs.name, fs.sector, fs.most_recent_quarter, fs.price_date, fs.roc, fs.earnings_yield, fs.book_market_ratio)
         # except Exception as e:
@@ -278,7 +275,6 @@ def change_to_new_keys(input_dict: dict) -> dict:
 
 def is_complete(input_dict: dict, keys_to_check: list, min_required: int) -> bool:
     check_list = []
-
     for k in keys_to_check:
         if input_dict.get(k) is not None:
             if isinstance(input_dict[k], str) and input_dict[k] != '':
@@ -287,7 +283,6 @@ def is_complete(input_dict: dict, keys_to_check: list, min_required: int) -> boo
                 check_list.append(True)
         else:
             check_list.append(False)
-
     return check_list.count(True) >= min_required
 
 
@@ -593,7 +588,7 @@ if __name__ == '__main__':
     all_keys = list(chain.from_iterable(keys_list))
 
     metric_list = ["profile", "price", "stat", "financial"]
-    force_renew_list = [False, False, False, False]  # TODO: recover this
+    force_renew_list = [False, True, True, True]
     excluded_sectors = ["Financial Services", "Utilities", "Real Estate"]
     filter_list = [remove_outdated, remove_sector, remove_small_marketcap, remove_country]
 
