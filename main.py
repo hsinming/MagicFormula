@@ -4,7 +4,7 @@
 @author: Hsin-ming Chen
 @license: GPL
 @file: main.py
-@time: 2023/02/25
+@time: 2023/08/14
 @contact: hsinming.chen@gmail.com
 @software: PyCharm
 """
@@ -15,7 +15,6 @@ import time
 import sqlite3 as sq
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any
 from ftplib import FTP
 from itertools import chain
 import pandas as pd
@@ -34,44 +33,46 @@ class FinancialStatement(object):
     def set_ticker(self, ticker: str):
         self.ticker = ticker
 
-    def _get_value(self, key: str) -> Any:
+    def _get_number(self, key: str) -> float:
         result = self.sheet[self.ticker][key]
+        if isinstance(result, str):
+            result = float(result)
         if math.isnan(result):
-            print(f"Missing {key} for {self.ticker}")
-            result = 0
+            print(f"Missing {key} for {self.ticker}. Set to zero.")
+            result = 0.0
         return result
 
     @property
     def ebit_ttm(self):
-        return self._get_value('EBIT')
+        return self._get_number('EBIT')
 
     @property
     def total_assets(self):
-        return self._get_value('TotalAssets')
+        return self._get_number('TotalAssets')
 
     @property
     def total_debt(self):
-        return self._get_value('TotalDebt')
+        return self._get_number('TotalDebt')
 
     @property
     def current_assets(self):
-        return self._get_value('CurrentAssets')
+        return self._get_number('CurrentAssets')
 
     @property
     def current_liabilities(self):
-        return self._get_value('CurrentLiabilities')
+        return self._get_number('CurrentLiabilities')
 
     @property
     def longterm_debt(self):
-        return self._get_value('LongTermDebtAndCapitalLeaseObligation')
+        return self._get_number('LongTermDebtAndCapitalLeaseObligation')
 
     @property
     def minority_interest(self):
-        return self._get_value('MinorityInterest')
+        return self._get_number('MinorityInterest')
 
     @property
     def preferred_stock(self):
-        return self._get_value('PreferredStock')
+        return self._get_number('PreferredStock')
 
     @property
     def total_cash(self):
@@ -79,7 +80,7 @@ class FinancialStatement(object):
         https://www.valupaedia.com/index.php/business-dictionary/552-excess-cash
         Total Cash = Cash and cash equivalents + short term investments
         """
-        return self._get_value('CashCashEquivalentsAndShortTermInvestments')
+        return self._get_number('CashCashEquivalentsAndShortTermInvestments')
 
     @property
     def excess_cash(self):
@@ -94,7 +95,7 @@ class FinancialStatement(object):
 
     @property
     def net_property_plant_equipment(self):
-        return self._get_value('NetPPE')
+        return self._get_number('NetPPE')
 
     @property
     def net_fixed_assets(self):
@@ -121,7 +122,7 @@ class FinancialStatement(object):
         https://www.valuesignals.com/Glossary/Details/Market_Capitalization/13381
         market cap = share price * common share outstanding
         """
-        return self._get_value('marketCap')
+        return self._get_number('marketCap')
 
     @property
     def enterprise_value(self):
@@ -151,10 +152,17 @@ class FinancialStatement(object):
         return self.ebit_ttm / self.enterprise_value
 
     @property
+    def book_value(self):
+        return self._get_number('bookValue')
+
+    @property
+    def regular_market_price(self):
+        price = self._get_number('regularMarketPrice') if self._get_number('regularMarketPrice') > 0 else -1
+        return price
+
+    @property
     def book_market_ratio(self):
-        book = self._get_value('bookValue')
-        price = self._get_value('regularMarketPrice') if self._get_value('regularMarketPrice') > 0 else -1
-        return book / price
+        return self.book_value / self.regular_market_price
 
     @property
     def sector(self):
@@ -166,8 +174,8 @@ class FinancialStatement(object):
 
     @property
     def price_date(self):
-        timestamp = self.sheet[self.ticker]["regularMarketTime"]
-        dt_obj = datetime.fromtimestamp(timestamp)
+        market_date_time = self.sheet[self.ticker]["regularMarketTime"]
+        dt_obj = datetime.fromisoformat(market_date_time)
         dt_str = dt_obj.strftime('%Y-%m-%d')
         return dt_str
 
@@ -203,17 +211,19 @@ def update_db(financial_dict, db_path):
     earnings_yield REAL NOT NULL,
     book_market_ratio REAL
     );''')
-
     fs = FinancialStatement(financial_dict)
-
     for ticker in financial_dict.keys():
-        try:
-            fs.set_ticker(ticker)
-            data = (ticker, fs.name, fs.sector, fs.most_recent_quarter, fs.price_date, fs.roc, fs.earnings_yield, fs.book_market_ratio)
-            insert_data(conn, data)
-
-        except Exception as e:
-            print(f"Insert data error for ticker {ticker}: {e}. Going to next ticker.")
+        fs.set_ticker(ticker)
+        data = (ticker, fs.name, fs.sector, fs.most_recent_quarter, fs.price_date, fs.roc, fs.earnings_yield,
+                fs.book_market_ratio)
+        insert_data(conn, data)
+        # try:
+        #     data = (ticker, fs.name, fs.sector, fs.most_recent_quarter, fs.price_date, fs.roc, fs.earnings_yield, fs.book_market_ratio)
+        # except Exception as e:
+        #     print(f"Insert data error for ticker {ticker}: {e}. Going to next ticker.")
+        #     continue
+        # else:
+        #     insert_data(conn, data)
 
     if conn:
         conn.close()
@@ -254,33 +264,25 @@ def dict_to_csv(input_dict: dict, csv_path: Path):
 
 def change_to_new_keys(input_dict: dict) -> dict:
     result = {}
-
     for ticker, old_row in input_dict.items():
         new_row = {k: math.nan for k in all_keys}
-
         for k, v in old_row.items():
             if k in all_keys:
                 new_row[k] = v
-
         result[ticker] = new_row
-
     return result
 
 
 def is_complete(input_dict: dict, keys_to_check: list, min_required: int) -> bool:
     check_list = []
-
     for k in keys_to_check:
         if input_dict.get(k) is not None:
             if isinstance(input_dict[k], str) and input_dict[k] != '':
                 check_list.append(True)
-
             if isinstance(input_dict[k], float) and not math.isnan(input_dict[k]):
                 check_list.append(True)
-
         else:
             check_list.append(False)
-
     return check_list.count(True) >= min_required
 
 
@@ -302,7 +304,6 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
 
     if is_forced:
         tickers_to_pull = ticker_list
-
     else:
         for t in ticker_list:
             if t not in result.keys() or not is_complete(result[t], keys, 1):
@@ -319,32 +320,40 @@ def get_financial(ticker_list: list, metric: str, keys: list, is_forced: bool) -
             row_dict = result.get(t, {k: math.nan for k in all_keys})
             data = None
 
-            if metric == 'financial':
-                pulled_data = stock.get_financial_data(keys, 'q', trailing=True)
+            try:
+                if metric == 'financial':
+                    pulled_data = stock.get_financial_data(keys, 'q', trailing=True)
 
-                if isinstance(pulled_data, pd.DataFrame):
-                    ttm_df = pulled_data[pulled_data['periodType'] == 'TTM']
-                    ttm_df = ttm_df.sort_values(['asOfDate'])
-                    ttm_df = ttm_df.iloc[-1:, :]                # get the latest TTM
-                    quarterly_df = pulled_data[pulled_data['periodType'] == '3M']
-                    quarterly_df = quarterly_df.sort_values(['asOfDate'])
-                    quarterly_df = quarterly_df.iloc[-1:, :]    # get the latest quarter
+                    if isinstance(pulled_data, pd.DataFrame):
+                        ttm_df = pulled_data[pulled_data['periodType'] == 'TTM']
+                        ttm_df = ttm_df.sort_values(['asOfDate'])
+                        ttm_df = ttm_df.iloc[-1:, :]                # get the latest TTM
+                        quarterly_df = pulled_data[pulled_data['periodType'] == '3M']
+                        quarterly_df = quarterly_df.sort_values(['asOfDate'])
+                        quarterly_df = quarterly_df.iloc[-1:, :]    # get the latest quarter
 
-                    if len(quarterly_df) == len(ttm_df) == 1:
-                        result_df = quarterly_df                # financial data comes mainly from quarterly_df
+                        if len(quarterly_df) == len(ttm_df) == 1:
+                            result_df = quarterly_df                # financial data comes mainly from quarterly_df
 
-                        # replace quarterly EBIT with EBIT(TTM)
-                        result_df.iat[0, result_df.columns.get_loc('EBIT')] = ttm_df.iat[0, ttm_df.columns.get_loc('EBIT')]
+                            # replace quarterly EBIT with EBIT(TTM)
+                            result_df.iat[0, result_df.columns.get_loc('EBIT')] = ttm_df.iat[0, ttm_df.columns.get_loc('EBIT')]
 
-                        # convert DateTime type to string to save in dict
-                        result_df = result_df.astype({'asOfDate': 'str'})
-                        data = result_df.to_dict('index')       # a nested dict like {index -> {column -> value}}
+                            # convert DateTime type to string to save in dict
+                            result_df = result_df.astype({'asOfDate': 'str'})
+                            data = result_df.to_dict('index')       # a nested dict like {index -> {column -> value}}
 
-            elif metric == 'quotes':
-                data = stock.quotes
+                elif metric == 'price':
+                    data = stock.price
 
-            elif metric == 'profile':
-                data = stock.summary_profile
+                elif metric == 'stat':
+                    data = stock.key_stats
+
+                elif metric == 'profile':
+                    data = stock.summary_profile
+
+            except Exception as e:
+                print(e)
+                continue
 
             # Renew row by row
             if isinstance(data, dict) and isinstance(data.get(t), dict):
@@ -398,10 +407,8 @@ def download_ticker_list(country_code: str) -> list:
             ftp_server = FTP('ftp.nasdaqtrader.com', user='anonymous', passwd='', timeout=5)
             ftp_server.encoding = 'utf-8'
             ftp_server.dir()
-
         except Exception as e:
             print(f'Fail to connect ftp. {e}')
-
         else:
             ftp_server.cwd('symboldirectory')
             for file, save_path in [('nasdaqlisted.txt', nasdaq_security_path), ('otherlisted.txt', other_security_path)]:
@@ -462,14 +469,11 @@ def get_ticker_list(country_code: str) -> list:
 
     if ticker_list_path.is_file():
         print("Loading the ticker list...")
-
         with ticker_list_path.open('rt') as fp:
             ticker_list = json.load(fp)
-
     else:
         print("Download the ticker list...")
         ticker_list = download_ticker_list(country_code)
-
         with ticker_list_path.open('wt') as fp:
             json.dump(ticker_list, fp, indent=4)
             print(f'{ticker_list_path} is saved.')
@@ -508,7 +512,6 @@ def remove_small_marketcap(input_dict: dict) -> dict:
         if not math.isnan(market_cap):
             if currency == 'TWD':
                 market_cap_in_usd = market_cap / twd_converter
-
             else:
                 market_cap_in_usd = usd_converter.convert(market_cap, currency, 'USD')    # TWD is not included.
 
@@ -536,13 +539,6 @@ def process_args():
                         help='Get stocks from which country')
     parser.add_argument('--min-market-cap', '-m', type=int, default=1e9, dest='min_market_cap',
                         help='Minimal market cap in USD')
-    parser.add_argument('--quotes', action='store_true', dest='force_quotes',
-                        help='Renew quotes')
-    parser.add_argument('--financial', action='store_true', dest='force_financial',
-                        help='Renew financial statement')
-    parser.add_argument('--profile', action='store_true', dest='force_profile',
-                        help='Renew summary profile')
-
     return parser.parse_args()
 
 
@@ -574,18 +570,26 @@ if __name__ == '__main__':
     fn_financial = 'financial'
     fn_stock_rank = 'stock_rank'
 
-    # https://yahooquery.dpguthrie.com/guide/ticker/financials/#get_financial_data
+    # https://yahooquery.dpguthrie.com/guide/ticker/modules/#summary_profile
     profile_keys = ["sector", "country"]
-    quotes_keys = ["longName", "currency", "marketCap", "bookValue", "regularMarketPrice", "regularMarketTime"]
+
+    # https://yahooquery.dpguthrie.com/guide/ticker/modules/#price
+    price_keys = ["longName", "currency", "marketCap", "regularMarketPrice", "regularMarketTime"]
+
+    # https://yahooquery.dpguthrie.com/guide/ticker/modules/#key_stats
+    stat_keys = ["bookValue"]
+
+    # https://yahooquery.dpguthrie.com/guide/ticker/financials/#get_financial_data
     financial_keys = ["asOfDate", "EBIT", "TotalAssets", "TotalDebt", "LongTermDebtAndCapitalLeaseObligation",
                       "CurrentAssets", "CurrentLiabilities", "NetPPE", "CashCashEquivalentsAndShortTermInvestments",
                       "MinorityInterest", "PreferredStock"]
-    keys_list = [profile_keys, quotes_keys, financial_keys]
+
+    keys_list = [profile_keys, price_keys, stat_keys, financial_keys]
     all_keys = list(chain.from_iterable(keys_list))
 
-    metric_list = ["profile", "quotes", "financial"]
-    force_renew_list = [args.force_profile, args.force_quotes, args.force_financial]
-    excluded_sectors = ["Financial Services", "Financial", "Utilities", "Real Estate"]
+    metric_list = ["profile", "price", "stat", "financial"]
+    force_renew_list = [False, True, True, True]
+    excluded_sectors = ["Financial Services", "Utilities", "Real Estate"]
     filter_list = [remove_outdated, remove_sector, remove_small_marketcap, remove_country]
 
     start = time.time()
