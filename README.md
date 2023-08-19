@@ -23,8 +23,6 @@ There are some flags to be aware of:
 
 * `-c`    Country. ['US', 'TW'], default='US'
 * `-m`    Minimal market cap in USD, default=1000,000,000 USD
-* `--quotes`    forcefully renew quotes
-* `--profile`    forcefully renew summary profile
-* `--financial`    forcefully renew financial statements
+
 
 ### Inspired by nblade66 [(github)](https://github.com/nblade66/MagicFormula)
