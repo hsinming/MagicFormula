@@ -535,7 +535,7 @@ def remove_country(input_dict: dict) -> dict:
 
 def process_args():
     parser = argparse.ArgumentParser(description='Process refresh options')
-    parser.add_argument('--country', '-c', type=str, default='US', dest='country',
+    parser.add_argument('--country', '-c', choices=['US', 'TW'], type=str, default='US', dest='country',
                         help='Get stocks from which country')
     parser.add_argument('--min-market-cap', '-m', type=int, default=1e9, dest='min_market_cap',
                         help='Minimal market cap in USD')
